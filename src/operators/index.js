@@ -1,0 +1,1 @@
+export {fromHijackedEvent} from './fromHijackedEvent'
