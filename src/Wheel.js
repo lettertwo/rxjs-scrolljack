@@ -1,8 +1,12 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
-import {WheelSubscriber} from './WheelSubscriber'
 import {fromHijackedEvent} from './operators/fromHijackedEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
+import {
+  WheelStartOperator,
+  WheelMoveOperator,
+  WheelStopOperator,
+} from './operators/wheel'
 
 const WHEEL = 'wheel'
 
@@ -42,39 +46,3 @@ export class Wheel extends Observable {
 }
 
 export default Wheel
-
-class WheelStartOperator {
-  call (subscriber, source) {
-    return source._subscribe(new WheelStartSubscriber(subscriber))
-  }
-}
-
-class WheelStartSubscriber extends WheelSubscriber {
-  _start (value) {
-    this.dispatch(value)
-  }
-}
-
-class WheelMoveOperator {
-  call (subscriber, source) {
-    return source._subscribe(new WheelMoveSubscriber(subscriber))
-  }
-}
-
-class WheelMoveSubscriber extends WheelSubscriber {
-  _move (value) {
-    this.dispatch(value)
-  }
-}
-
-class WheelStopOperator {
-  call (subscriber, source) {
-    return source._subscribe(new WheelStopSubscriber(subscriber))
-  }
-}
-
-class WheelStopSubscriber extends WheelSubscriber {
-  _stop (value) {
-    this.dispatch(value)
-  }
-}

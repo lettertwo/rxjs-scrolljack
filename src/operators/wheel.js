@@ -3,6 +3,8 @@ import {async} from 'rxjs/scheduler/async'
 
 const SCROLL_STOP_DELAY = 60
 
+const dispatchStop = subscriber => { subscriber.stopNow() }
+
 export class WheelSubscriber extends Subscriber {
   constructor (destination) {
     super(destination)
@@ -102,6 +104,37 @@ export class WheelSubscriber extends Subscriber {
   _stop () { /* noop */ }
 }
 
-const dispatchStop = subscriber => { subscriber.stopNow() }
+export class WheelStartSubscriber extends WheelSubscriber {
+  _start (value) {
+    this.dispatch(value)
+  }
+}
+export class WheelMoveSubscriber extends WheelSubscriber {
+  _move (value) {
+    this.dispatch(value)
+  }
+}
 
-export default WheelSubscriber
+export class WheelStopSubscriber extends WheelSubscriber {
+  _stop (value) {
+    this.dispatch(value)
+  }
+}
+
+export class WheelStartOperator {
+  call (subscriber, source) {
+    return source._subscribe(new WheelStartSubscriber(subscriber))
+  }
+}
+
+export class WheelMoveOperator {
+  call (subscriber, source) {
+    return source._subscribe(new WheelMoveSubscriber(subscriber))
+  }
+}
+
+export class WheelStopOperator {
+  call (subscriber, source) {
+    return source._subscribe(new WheelStopSubscriber(subscriber))
+  }
+}
