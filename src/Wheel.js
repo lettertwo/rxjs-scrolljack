@@ -1,7 +1,8 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
 import {WheelSubscriber} from './WheelSubscriber'
-import {fromHijackedEvent} from './operators'
+import {fromHijackedEvent} from './operators/fromHijackedEvent'
+import {DeltaOperator} from './operators/DeltaOperator'
 
 const WHEEL = 'wheel'
 
@@ -13,6 +14,7 @@ export class Wheel extends Observable {
     } else {
       super()
       this.source = fromHijackedEvent(target, WHEEL)
+      this.source.operator = new DeltaOperator()
     }
   }
 

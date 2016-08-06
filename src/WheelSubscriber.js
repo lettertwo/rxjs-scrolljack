@@ -14,8 +14,7 @@ export class WheelSubscriber extends Subscriber {
   _next (value) {
     const {_lastValue: lastValue} = this
     this._lastValue = value
-    const {deltaX, deltaY} = value
-    const deltaT = lastValue ? parseInt(value.timeStamp - lastValue.timeStamp, 10) : 0
+    const {deltaX, deltaY, deltaT} = value
 
     if (!this._started) {
       if (!this._ignoring) {
