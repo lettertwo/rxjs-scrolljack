@@ -1,5 +1,5 @@
 {
-  "name": "scrollrx",
+  "name": "rxjs-scrolljack",
   "version": "0.1.0",
   "description": "An Observable scrolljacker",
   "main": "lib/index.js",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lettertwo/scrollrx.git"
+    "url": "git+https://github.com/lettertwo/rxjs-scrolljack.git"
   },
   "keywords": [
     "rxjs",
@@ -21,9 +21,9 @@
   "author": "Eric Eldredge <lettertwo@gmail.com",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/lettertwo/scrollrx/issues"
+    "url": "https://github.com/lettertwo/rxjs-scrolljack/issues"
   },
-  "homepage": "https://github.com/lettertwo/scrollrx#readme",
+  "homepage": "https://github.com/lettertwo/rxjs-scrolljack#readme",
   "devDependencies": {
     "ava": "0.15.2",
     "babel-cli": "6.10.1",
@@ -47,7 +47,7 @@
     "rxjs": ">=5.0.0-beta.10"
   },
   "dependencies": {
-    "symbol-observable": ">=1.0.1"
+    "symbol-observable": "^1.0.1"
   },
   "ava": {
     "require": [
