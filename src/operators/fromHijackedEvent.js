@@ -1,10 +1,29 @@
+import $$observable from 'symbol-observable'
+import {Observable} from 'rxjs/Observable'
 import {fromEvent} from 'rxjs/observable/fromEvent'
-import {filter} from 'rxjs/operator/filter'
 import {_do as tap} from 'rxjs/operator/do'
 import {preventDefault} from '../utils'
 
-export const fromHijackedEvent = (el, type, predicate) => {
-  let events = fromEvent(el, type)
-  if (predicate) events = events::filter(predicate)
-  return events::tap(preventDefault)
+class FromHijackedEventObserverable extends Observable {
+  constructor (target, ...args) {
+    if (typeof target[$$observable] === 'function') {
+      super()
+      this.source = target[$$observable]()
+    } else {
+      super()
+      this.source = fromEvent(target, ...args)::tap(preventDefault)
+    }
+  }
+
+  lift (operator) {
+    const observable = new FromHijackedEventObserverable(this)
+    observable.operator = operator
+    return observable
+  }
+
+  static create (...args) {
+    return new FromHijackedEventObserverable(...args)
+  }
 }
+
+export const fromHijackedEvent = FromHijackedEventObserverable.create
