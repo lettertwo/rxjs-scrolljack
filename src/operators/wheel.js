@@ -22,8 +22,8 @@ export class WheelSubscriber extends Subscriber {
       if (!this._ignoring) {
         if (deltaT || !lastValue) {
           this.startNow()
-          this.moveNow()
           if (deltaX || deltaY) {
+            this.moveNow()
             this.scheduleStop()
           }
         } else {
