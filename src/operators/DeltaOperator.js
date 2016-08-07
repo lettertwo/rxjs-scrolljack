@@ -2,16 +2,14 @@ import {Subscriber} from 'rxjs/Subscriber'
 import {timeStamp} from '../utils'
 
 export class DeltaSubscriber extends Subscriber {
-  constructor (destination) {
+  constructor (destination, computeDelta) {
     super(destination)
+    this.computeDelta = computeDelta || DeltaSubscriber._computeDelta
     this._lastValue = null
     this._lastTime = null
   }
 
-  _next (value) {
-    const {_lastValue: lastValue, _lastTime: lastTime} = this
-    const time = timeStamp(value)
-    const deltaT = lastTime ? time - lastTime : 0
+  static _computeDelta (value, lastValue) {
     let {deltaX, deltaY} = value
 
     if (value.type && value.type.startsWith('touch')) {
@@ -24,12 +22,31 @@ export class DeltaSubscriber extends Subscriber {
         deltaX = prevX - clientX
         deltaY = prevY - clientY
       }
+    } else if (value.type && value.type.startsWith('mouse')) {
+      if (!lastValue) {
+        deltaX = 0
+        deltaY = 0
+      } else {
+        const {clientX: prevX, clientY: prevY} = lastValue
+        const {clientX, clientY} = value
+        deltaX = prevX - clientX
+        deltaY = prevY - clientY
+      }
     }
+
+    return {deltaX, deltaY}
+  }
+
+  _next (value) {
+    const {_lastValue: lastValue, _lastTime: lastTime} = this
+    const time = timeStamp(value)
+    const deltaT = lastTime ? time - lastTime : 0
+    const delta = this.computeDelta(value, lastValue)
 
     this._lastValue = value
     this._lastTime = time
 
-    super._next({deltaX, deltaY, deltaT})
+    super._next({...delta, deltaT})
   }
 
   _complete () {
@@ -40,8 +57,12 @@ export class DeltaSubscriber extends Subscriber {
 }
 
 export class DeltaOperator {
+  constructor (computeDelta) {
+    this.computeDelta = computeDelta
+  }
+
   call (subscriber, source) {
-    return source._subscribe(new DeltaSubscriber(subscriber))
+    return source._subscribe(new DeltaSubscriber(subscriber, this.computeDelta))
   }
 }
 
