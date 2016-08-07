@@ -2,7 +2,7 @@ import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
 import {fromHijackedEvent} from './operators/fromHijackedEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
-import {MouseMoveOperator} from './operators/mouse'
+import {MoveOperator} from './operators/MoveOperator'
 
 const MOUSE_DOWN = 'mousedown'
 const MOUSE_MOVE = 'mousemove'
@@ -35,7 +35,7 @@ export class Mouse extends Observable {
   }
 
   static move (target) {
-    return new Mouse(target).lift(new MouseMoveOperator(
+    return new Mouse(target).lift(new MoveOperator(
       Mouse.start(target),
       Mouse.stop(target),
     ))

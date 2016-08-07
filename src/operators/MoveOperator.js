@@ -1,6 +1,6 @@
 import {Subscriber} from 'rxjs/Subscriber'
 
-export class MouseMoveSubscriber extends Subscriber {
+export class MoveSubscriber extends Subscriber {
   constructor (destination, source, stopSource) {
     super(destination)
     this.source = source
@@ -10,7 +10,6 @@ export class MouseMoveSubscriber extends Subscriber {
 
   _next (value) {
     if (!this.started) {
-      this.dispatch(value)
       this.started = true
       this.sourceSub = this.source._subscribe(this.dispatch)
       this.add(this.sourceSub)
@@ -48,7 +47,7 @@ export class MouseMoveSubscriber extends Subscriber {
   }
 }
 
-export class MouseMoveOperator {
+export class MoveOperator {
   constructor (startSource, stopSource) {
     this.startSource = startSource
     this.stopSource = stopSource
@@ -57,7 +56,7 @@ export class MouseMoveOperator {
   call (subscriber, source) {
     const {startSource, stopSource} = this
     return startSource._subscribe(
-      new MouseMoveSubscriber(subscriber, source, stopSource)
+      new MoveSubscriber(subscriber, source, stopSource)
     )
   }
 }

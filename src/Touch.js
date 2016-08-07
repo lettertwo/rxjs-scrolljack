@@ -2,6 +2,7 @@ import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
 import {fromHijackedEvent} from './operators/fromHijackedEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
+import {MoveOperator} from './operators/MoveOperator'
 
 const TOUCH_START = 'touchstart'
 const TOUCH_MOVE = 'touchmove'
@@ -36,7 +37,10 @@ export class Touch extends Observable {
   }
 
   static move (target) {
-    return new Touch(target)
+    return new Touch(target).lift(new MoveOperator(
+      Touch.start(target),
+      Touch.stop(target),
+    ))
   }
 
   static stop (target) {
