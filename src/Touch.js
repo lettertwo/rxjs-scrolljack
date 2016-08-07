@@ -7,6 +7,8 @@ const TOUCH_START = 'touchstart'
 const TOUCH_MOVE = 'touchmove'
 const TOUCH_END = 'touchend'
 
+const excludeMultiTouch = e => e.touches.length <= 1
+
 export class Touch extends Observable {
   constructor (target, event = TOUCH_MOVE) {
     if (typeof target[$$observable] === 'function') {
@@ -14,7 +16,7 @@ export class Touch extends Observable {
       this.source = target[$$observable]()
     } else {
       super()
-      this.source = fromHijackedEvent(target, event)
+      this.source = fromHijackedEvent(target, event, excludeMultiTouch)
       this.source.operator = new DeltaOperator()
     }
   }
