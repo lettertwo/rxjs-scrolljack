@@ -9,10 +9,22 @@ export class DeltaSubscriber extends Subscriber {
   }
 
   _next (value) {
-    const {_lastTime: lastTime} = this
+    const {_lastValue: lastValue, _lastTime: lastTime} = this
     const time = timeStamp(value)
     const deltaT = lastTime ? time - lastTime : 0
     let {deltaX, deltaY} = value
+
+    if (value.type && value.type.startsWith('touch')) {
+      if (!lastValue || !lastValue.touches || !lastValue.touches.length) {
+        deltaX = 0
+        deltaY = 0
+      } else {
+        const {clientX: prevX, clientY: prevY} = lastValue.touches[0]
+        const {clientX, clientY} = value.touches[0]
+        deltaX = prevX - clientX
+        deltaY = prevY - clientY
+      }
+    }
 
     this._lastValue = value
     this._lastTime = time
