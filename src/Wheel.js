@@ -1,5 +1,6 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
+import {takeUntil} from 'rxjs/operator/takeUntil'
 import {fromHijackedEvent} from './operators/fromHijackedEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
 import {
@@ -29,7 +30,7 @@ export class Wheel extends Observable {
   }
 
   static from (target) {
-    return new Wheel(target)
+    return new Wheel(target)::takeUntil(Wheel.stop(target))
   }
 
   static start (target) {

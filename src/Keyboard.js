@@ -1,5 +1,6 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
+import {takeUntil} from 'rxjs/operator/takeUntil'
 import {fromHijackedEvent} from './operators/fromHijackedEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
 
@@ -61,7 +62,7 @@ export class Keyboard extends Observable {
   }
 
   static from (target) {
-    return new Keyboard(target)
+    return new Keyboard(target)::takeUntil(Keyboard.stop(target))
   }
 
   static start (target) {

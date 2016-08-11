@@ -1,5 +1,6 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
+import {takeUntil} from 'rxjs/operator/takeUntil'
 import {fromHijackedEvent} from './operators/fromHijackedEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
 import {MoveOperator} from './operators/MoveOperator'
@@ -29,7 +30,7 @@ export class Touch extends Observable {
   }
 
   static from (target) {
-    return new Touch(target)
+    return new Touch(target)::takeUntil(Touch.stop(target))
   }
 
   static start (target) {

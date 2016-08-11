@@ -1,6 +1,7 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
+import {takeUntil} from 'rxjs/operator/takeUntil'
 import {Touch} from './Touch'
 import {Wheel} from './Wheel'
 import {Keyboard} from './Keyboard'
@@ -30,7 +31,7 @@ export class Scroll extends Observable {
   }
 
   static from (...args) {
-    return new Scroll(...args)
+    return Scroll.move(...args)::takeUntil(Scroll.stop(...args))
   }
 
   static start (target, ...sources) {
