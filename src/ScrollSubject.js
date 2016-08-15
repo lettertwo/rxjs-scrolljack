@@ -8,27 +8,24 @@ import {Keyboard} from './Keyboard'
 
 export class ScrollSubject extends Subject {
 
-  constructor (targetOrRect, rect, ...sources) {
-    if (typeof rect[$$observable] === 'function') {
-      super()
-      this.sources = [
-        rect[$$observable](),
-        ...sources.map(source => source[$$observable]()),
-      ]
-      this.rect = targetOrRect
-    } else if (typeof rect === 'undefined') {
+  constructor (target, rect) {
+    if (typeof rect === 'undefined') {
       throw new Error('A scroll offset rect of the shape {x, y, width, height} is required')
+    }
+
+    if (typeof target[$$observable] === 'function') {
+      super()
+      this.source = target[$$observable]()
+      this.rect = rect
     } else {
       super()
-      this.sources = [
-        Wheel.move(targetOrRect),
-        Touch.move(targetOrRect),
-        Keyboard.move(targetOrRect),
-        ...sources.map(source => source[$$observable]()),
-      ]
+      this.source = merge(
+        Wheel.move(target),
+        Touch.move(target),
+        Keyboard.move(target),
+      )
       this.rect = rect
     }
-    this.source = merge(...this.sources)
   }
 
   subscribe (subscriber) {
@@ -38,7 +35,7 @@ export class ScrollSubject extends Subject {
   }
 
   lift (operator) {
-    const subject = new ScrollSubject(this.rect, ...this.sources)
+    const subject = new ScrollSubject(this.source, this.rect)
     subject.operator = operator
     return subject
   }
