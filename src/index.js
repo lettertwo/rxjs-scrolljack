@@ -1,4 +1,4 @@
-export {Scroll} from './Scroll'
+export {ScrollSubject} from './ScrollSubject'
 export {Wheel} from './Wheel'
 export {Touch} from './Touch'
 export {Mouse} from './Mouse'
