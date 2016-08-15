@@ -39,6 +39,10 @@ export class ScrollSubject extends Subject {
     subject.operator = operator
     return subject
   }
+
+  withRect (rect) {
+    return new ScrollSubject(this.source, rect)
+  }
 }
 
 export default ScrollSubject
