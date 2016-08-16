@@ -5,6 +5,7 @@ import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {Touch} from './Touch'
 import {Wheel} from './Wheel'
 import {Keyboard} from './Keyboard'
+import {MomentumOperator} from './operators/MomentumOperator'
 
 export class ScrollSubject extends Subject {
 
@@ -79,6 +80,19 @@ export class ScrollSubject extends Subject {
       this.startSource,
       this.stopSource,
       rect,
+    )
+  }
+
+  momentum (scheduler) {
+    return new ScrollSubject(
+      this.source.lift(new MomentumOperator(
+        this.startSource,
+        this.stopSource,
+        scheduler,
+      )),
+      this.startSource,
+      this.stopSource,
+      this.rect,
     )
   }
 }
