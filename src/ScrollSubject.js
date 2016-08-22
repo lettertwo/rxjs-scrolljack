@@ -6,6 +6,11 @@ import {Touch} from './Touch'
 import {Wheel} from './Wheel'
 import {Keyboard} from './Keyboard'
 import {MomentumOperator} from './operators/MomentumOperator'
+import {
+  AnchorOperator,
+  parseAnchorXOpts,
+  parseAnchorYOpts,
+} from './operators/kinematic/AnchorOperator'
 
 export class ScrollSubject extends Subject {
 
@@ -83,7 +88,55 @@ export class ScrollSubject extends Subject {
     )
   }
 
-  momentum (scheduler) {
+  anchorX (opts, scheduler) {
+    const anchoredSource = this.source.lift(new AnchorOperator(
+      parseAnchorXOpts(opts),
+      this.startSource,
+      this.stopSource,
+      scheduler,
+    ))
+
+    return new ScrollSubject(
+      anchoredSource,
+      this.startSource,
+      this.stopSource,
+      this.rect,
+    )
+  }
+
+  anchorY (opts, scheduler) {
+    const anchoredSource = this.source.lift(new AnchorOperator(
+      parseAnchorYOpts(opts),
+      this.startSource,
+      this.stopSource,
+      scheduler,
+    ))
+
+    return new ScrollSubject(
+      anchoredSource,
+      this.startSource,
+      this.stopSource,
+      this.rect,
+    )
+  }
+
+  anchor (opts, scheduler) {
+    const anchoredSource = this.source.lift(new AnchorOperator(
+      [parseAnchorXOpts(opts), parseAnchorYOpts(opts)],
+      this.startSource,
+      this.stopSource,
+      scheduler,
+    ))
+
+    return new ScrollSubject(
+      anchoredSource,
+      this.startSource,
+      this.stopSource,
+      this.rect,
+    )
+  }
+
+  momentum (opts, scheduler) {
     return new ScrollSubject(
       this.source.lift(new MomentumOperator(
         this.startSource,
