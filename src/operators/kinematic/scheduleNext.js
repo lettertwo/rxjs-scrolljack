@@ -13,3 +13,5 @@ export const scheduleNext = (state, next) => {
     return state.subscription
   }
 }
+
+export const createShouldScheduleNext = predicate => ({opts}) => opts.some(predicate)

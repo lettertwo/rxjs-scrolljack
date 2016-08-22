@@ -1,51 +1,17 @@
-import {isCollection} from 'iterall'
 import {Subscriber} from 'rxjs/Subscriber'
 import {animationFrame} from 'rxjs/scheduler/animationFrame'
 import {computeNetDelta, computeMinNetDelta} from './computeNetDelta'
-import {scheduleNext} from './scheduleNext'
+import {scheduleNext, createShouldScheduleNext} from './scheduleNext'
+import {parseOptsArray} from './parseOpts'
 
-const K = 120  // Default stiffness
-const B = 36  //  Default damping
 const F = 1000 / 60  // Default frame rate
-const P = 0.01  // Default precision
 
-const toDeltaFromDeltaX = ({deltaX}) => deltaX
-const toDeltaXFromDelta = delta => ({deltaX: delta})
-
-const toDeltaFromDeltaY = ({deltaY}) => deltaY
-const toDeltaYFromDelta = delta => ({deltaY: delta})
-
-export const parseAnchorXOpts = opts => ({
-  toDelta: toDeltaFromDeltaX,
-  fromDelta: toDeltaXFromDelta,
-  ...opts,
-})
-
-export const parseAnchorYOpts = opts => ({
-  toDelta: toDeltaFromDeltaY,
-  fromDelta: toDeltaYFromDelta,
-  ...opts,
-})
-
-const toAnchor = anchorLike => {
-  if (typeof anchorLike.toDelta !== 'function') {
-    throw new Error('A `toDelta` anchor option is required.')
-  }
-
-  if (typeof anchorLike.fromDelta !== 'function') {
-    throw new Error('A `fromDelta` anchor option is required.')
-  }
-
-  return {
-    stiffness: K,
-    damping: B,
-    precision: P,
-    ...anchorLike,
-  }
-}
+const shouldScheduleNext = createShouldScheduleNext(
+  opt => opt.velocity !== 0 || opt.netDelta !== 0
+)
 
 export class AnchorSubscriber extends Subscriber {
-  constructor (destination, anchors, startSource, stopSource, scheduler) {
+  constructor (destination, opts, startSource, stopSource, scheduler) {
     super(destination)
     this.scheduler = scheduler
     this.startCount = 0
@@ -56,7 +22,7 @@ export class AnchorSubscriber extends Subscriber {
       shouldComplete: false,
       subscription: null,
       time: null,
-      anchors: anchors.map(a => ({
+      opts: opts.map(a => ({
         velocity: 0,
         netDelta: 0,
         delta: 0,
@@ -79,9 +45,9 @@ export class AnchorSubscriber extends Subscriber {
 
   _next (value) {
     this.cancelNext()
-    const {anchors} = this.state
+    const {opts} = this.state
     const t = Math.min(Math.max(value.deltaT, 1), F) / 1000
-    super._next(anchors.reduce(AnchorSubscriber.createNextValueReducer(t), value))
+    super._next(opts.reduce(AnchorSubscriber.createNextValueReducer(t), value))
   }
 
   _complete () {
@@ -100,7 +66,7 @@ export class AnchorSubscriber extends Subscriber {
     this.cancelNext()
 
     if (this.state.shouldComplete || this.startCount <= 0) {
-      if (AnchorSubscriber.shouldScheduleNext(this.state)) {
+      if (shouldScheduleNext(this.state)) {
         this.scheduled = scheduleNext(this.state, AnchorSubscriber.computeAndDispatchNext)
         if (this.scheduled) this.add(this.scheduled)
       } else if (this.state.shouldComplete) {
@@ -135,12 +101,8 @@ export class AnchorSubscriber extends Subscriber {
     }
   }
 
-  static shouldScheduleNext (state) {
-    return state.velocity !== 0 || state.netDelta !== 0
-  }
-
   static computeAndDispatchNext (state) {
-    let {subscriber, time, anchors} = state
+    let {subscriber, time, opts} = state
 
     const now = state.scheduler.now()
     let deltaT = now - time
@@ -167,12 +129,12 @@ export class AnchorSubscriber extends Subscriber {
     let t = F / 1000
 
     // Apply the aggregate deltas to the subscriber.
-    subscriber.next(anchors.reduce(
+    subscriber.next(opts.reduce(
       AnchorSubscriber.createNextValueReducer(t, droppedFrames),
       {deltaX: 0, deltaY: 0, deltaT},
     ))
 
-    if (AnchorSubscriber.shouldScheduleNext(state)) {
+    if (shouldScheduleNext(state)) {
       scheduleNext(state, AnchorSubscriber.computeAndDispatchNext)
     } else if (state.shouldComplete) {
       state.destination.complete()
@@ -218,14 +180,8 @@ export class AnchorSubscriber extends Subscriber {
 }
 
 export class AnchorOperator {
-  constructor (anchors, startSource, stopSource, scheduler = animationFrame) {
-    if (isCollection(anchors)) {
-      anchors = Array.from(anchors)
-    } else {
-      anchors = [anchors]
-    }
-
-    this.anchors = anchors.map(toAnchor)
+  constructor (opts, startSource, stopSource, scheduler = animationFrame) {
+    this.opts = parseOptsArray(opts)
     this.startSource = startSource
     this.stopSource = stopSource
     this.scheduler = scheduler
@@ -234,7 +190,7 @@ export class AnchorOperator {
   call (subscriber, source) {
     return source._subscribe(new AnchorSubscriber(
       subscriber,
-      this.anchors,
+      this.opts,
       this.startSource,
       this.stopSource,
       this.scheduler,
