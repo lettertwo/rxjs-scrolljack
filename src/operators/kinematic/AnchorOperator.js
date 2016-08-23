@@ -1,3 +1,4 @@
+// TODO: Move the min guard for net delta into _next method
 import {computeNetDelta, computeMinNetDelta} from './computeNetDelta'
 import {createShouldScheduleNext} from './scheduleNext'
 import {KinematicSubscriber} from './KinematicSubscriber'
@@ -8,7 +9,6 @@ export class AnchorSubscriber extends KinematicSubscriber {
   static initialState = {
     velocity: 0,
     netDelta: 0,
-    delta: 0,
   }
 
   static shouldScheduleNext = createShouldScheduleNext(
@@ -18,7 +18,7 @@ export class AnchorSubscriber extends KinematicSubscriber {
   static nextValueReducer (value, state, t, droppedFrames = 0) {
     let {netDelta, K, B, P} = state
 
-    let delta = state.toDelta(value) || state.delta
+    let delta = state.toDelta(value)
 
     let velocity
 
@@ -43,7 +43,6 @@ export class AnchorSubscriber extends KinematicSubscriber {
     aggregateDelta += delta
 
     // Update state state with current frame results.
-    state.delta = delta
     state.netDelta = netDelta
     state.velocity = velocity
 
