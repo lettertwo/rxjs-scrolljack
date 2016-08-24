@@ -5,10 +5,10 @@
 let computedNext = []
 
 // A mass-spring-damper system directly inspired by (stolen from) react-motion.
-export const computeNetDelta = (netDelta, velocity, time, stiffness, damping, precision) => {
+export const computeNetDelta = (netDelta, targetDelta, velocity, time, stiffness, damping, precision) => {
   // Calculate the acceleration due to net forces from
   // current velocity plus the restorative spring force.
-  const spring = -stiffness * netDelta
+  const spring = -stiffness * netDelta - targetDelta
   const damper = -damping * velocity
   const a = spring + damper
 
@@ -17,8 +17,8 @@ export const computeNetDelta = (netDelta, velocity, time, stiffness, damping, pr
   let newNetDelta = netDelta + newVelocity * time
 
   // Round our value to PRECISION.
-  if (Math.abs(newVelocity) < precision && Math.abs(newNetDelta) < precision) {
-    newNetDelta = 0
+  if (Math.abs(newVelocity) < precision && Math.abs(newNetDelta - targetDelta) < precision) {
+    newNetDelta = targetDelta
     newVelocity = 0
   }
 
