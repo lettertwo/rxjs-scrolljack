@@ -5,7 +5,7 @@ import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {Touch} from './Touch'
 import {Wheel} from './Wheel'
 import {Keyboard} from './Keyboard'
-import {MomentumOperator} from './operators/MomentumOperator'
+import {MomentumOperator} from './operators/kinematic/MomentumOperator'
 import {AnchorOperator} from './operators/kinematic/AnchorOperator'
 import {parseXOpts, parseYOpts} from './operators/kinematic/parseOpts'
 
@@ -133,13 +133,48 @@ export class ScrollSubject extends Subject {
     )
   }
 
-  momentum (opts, scheduler) {
+  momentumX (opts, scheduler) {
+    const momentumSource = this.source.lift(new MomentumOperator(
+      parseXOpts(opts),
+      this.startSource,
+      this.stopSource,
+      scheduler,
+    ))
+
     return new ScrollSubject(
-      this.source.lift(new MomentumOperator(
-        this.startSource,
-        this.stopSource,
-        scheduler,
-      )),
+      momentumSource,
+      this.startSource,
+      this.stopSource,
+      this.rect,
+    )
+  }
+
+  momentumY (opts, scheduler) {
+    const momentumSource = this.source.lift(new MomentumOperator(
+      parseYOpts(opts),
+      this.startSource,
+      this.stopSource,
+      scheduler,
+    ))
+
+    return new ScrollSubject(
+      momentumSource,
+      this.startSource,
+      this.stopSource,
+      this.rect,
+    )
+  }
+
+  momentum (opts, scheduler) {
+    const momentumSource = this.source.lift(new MomentumOperator(
+      [parseXOpts(opts), parseYOpts(opts)],
+      this.startSource,
+      this.stopSource,
+      scheduler,
+    ))
+
+    return new ScrollSubject(
+      momentumSource,
       this.startSource,
       this.stopSource,
       this.rect,
