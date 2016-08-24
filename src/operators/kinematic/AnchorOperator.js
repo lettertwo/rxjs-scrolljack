@@ -28,18 +28,18 @@ export class AnchorSubscriber extends KinematicSubscriber {
     // Compute the cumulative result of any dropped frames.
     for (let i = 0; i < droppedFrames; i++) {
       // Compute the result of the dropped frame.
-      const [newNetDelta, newVelocity] = computeNetDelta(netDelta, delta / t, t, K, B, P)
-      delta = newNetDelta - netDelta
-      netDelta = newNetDelta
-      velocity = newVelocity
+      const [nd, nv] = computeNetDelta(netDelta, 0, delta / t, t, K, B, P)
+      delta = nd - netDelta
+      netDelta = nd
+      velocity = nv
       aggregateDelta += delta
     }
 
     // Compute the result of the current frame.
-    const [newNetDelta, newVelocity] = computeNetDelta(netDelta, delta / t, t, K, B, P)
-    delta = newNetDelta - netDelta
-    netDelta = newNetDelta
-    velocity = newVelocity
+    const [nd, nv] = computeNetDelta(netDelta, 0, delta / t, t, K, B, P)
+    delta = nd - netDelta
+    netDelta = nd
+    velocity = nv
     aggregateDelta += delta
 
     // Update state state with current frame results.
