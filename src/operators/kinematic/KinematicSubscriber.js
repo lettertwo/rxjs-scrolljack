@@ -55,6 +55,9 @@ export class KinematicSubscriber extends Subscriber {
   start = () => {
     this.startCount++
     this.cancelNext()
+    if (typeof this.constructor.start === 'function') {
+      this.state.opts.forEach(opt => this.constructor.start(opt))
+    }
   }
 
   stop = () => {
@@ -62,6 +65,10 @@ export class KinematicSubscriber extends Subscriber {
     this.cancelNext()
 
     if (this.state.shouldComplete || this.startCount <= 0) {
+      if (typeof this.constructor.stop === 'function') {
+        this.state.opts.forEach(opt => this.constructor.stop(opt))
+      }
+
       if (this.constructor.shouldScheduleNext(this.state)) {
         this.scheduled = scheduleNext(this.state, computeAndDispatchNext)
         if (this.scheduled) this.add(this.scheduled)
