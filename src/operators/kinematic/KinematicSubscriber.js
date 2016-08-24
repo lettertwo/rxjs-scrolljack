@@ -40,7 +40,7 @@ export class KinematicSubscriber extends Subscriber {
     this.cancelNext()
     const {opts} = this.state
     const t = Math.min(Math.max(value.deltaT, 1), F) / 1000
-    super._next(opts.reduce(
+    this.state.subscriber.next(opts.reduce(
       (value, opt) => this.constructor.nextValueReducer(value, opt, t),
       value,
     ))
