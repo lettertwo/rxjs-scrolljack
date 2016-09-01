@@ -1,7 +1,7 @@
 import {isCollection} from 'iterall'
 
-const K = 120  // Default stiffness
-const B = 36  //  Default damping
+const K = 170  // Default stiffness
+const B = 26  //  Default damping
 const P = 0.01  // Default precision
 
 const toDeltaFromDeltaX = ({deltaX}) => deltaX

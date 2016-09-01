@@ -5,9 +5,9 @@ import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {Touch} from './Touch'
 import {Wheel} from './Wheel'
 import {Keyboard} from './Keyboard'
-import {MomentumOperator} from './operators/kinematic/MomentumOperator'
-import {AnchorOperator} from './operators/kinematic/AnchorOperator'
-import {parseXOpts, parseYOpts} from './operators/kinematic/parseOpts'
+import {parseXOpts, parseYOpts} from './kinematic/parseOpts'
+import {Anchor} from './kinematic/Anchor'
+import {Momentum} from './kinematic/Momentum'
 
 export class ScrollSubject extends Subject {
 
@@ -86,12 +86,13 @@ export class ScrollSubject extends Subject {
   }
 
   anchorX (opts, scheduler) {
-    const anchoredSource = this.source.lift(new AnchorOperator(
+    const anchoredSource = new Anchor(
       parseXOpts(opts),
+      this.source,
       this.startSource,
       this.stopSource,
       scheduler,
-    ))
+    )
 
     return new ScrollSubject(
       anchoredSource,
@@ -102,12 +103,13 @@ export class ScrollSubject extends Subject {
   }
 
   anchorY (opts, scheduler) {
-    const anchoredSource = this.source.lift(new AnchorOperator(
+    const anchoredSource = new Anchor(
       parseYOpts(opts),
+      this.source,
       this.startSource,
       this.stopSource,
       scheduler,
-    ))
+    )
 
     return new ScrollSubject(
       anchoredSource,
@@ -118,12 +120,13 @@ export class ScrollSubject extends Subject {
   }
 
   anchor (opts, scheduler) {
-    const anchoredSource = this.source.lift(new AnchorOperator(
+    const anchoredSource = new Anchor(
       [parseXOpts(opts), parseYOpts(opts)],
+      this.source,
       this.startSource,
       this.stopSource,
       scheduler,
-    ))
+    )
 
     return new ScrollSubject(
       anchoredSource,
@@ -134,12 +137,13 @@ export class ScrollSubject extends Subject {
   }
 
   momentumX (opts, scheduler) {
-    const momentumSource = this.source.lift(new MomentumOperator(
+    const momentumSource = new Momentum(
       parseXOpts(opts),
+      this.source,
       this.startSource,
       this.stopSource,
       scheduler,
-    ))
+    )
 
     return new ScrollSubject(
       momentumSource,
@@ -150,12 +154,13 @@ export class ScrollSubject extends Subject {
   }
 
   momentumY (opts, scheduler) {
-    const momentumSource = this.source.lift(new MomentumOperator(
+    const momentumSource = new Momentum(
       parseYOpts(opts),
+      this.source,
       this.startSource,
       this.stopSource,
       scheduler,
-    ))
+    )
 
     return new ScrollSubject(
       momentumSource,
@@ -166,12 +171,13 @@ export class ScrollSubject extends Subject {
   }
 
   momentum (opts, scheduler) {
-    const momentumSource = this.source.lift(new MomentumOperator(
+    const momentumSource = new Momentum(
       [parseXOpts(opts), parseYOpts(opts)],
+      this.source,
       this.startSource,
       this.stopSource,
       scheduler,
-    ))
+    )
 
     return new ScrollSubject(
       momentumSource,
