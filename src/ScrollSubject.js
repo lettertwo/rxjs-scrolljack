@@ -213,14 +213,12 @@ class ScrollSubjectSubscriber extends Subscriber {
       y: this.latestFromSubject.y,
     }
 
-    if (deltaX) nextValue.x += deltaX
-    if (deltaY) nextValue.y += deltaY
+    this.latestFromSubject.x = nextValue.x + deltaX
+    nextValue.x = Math.round(this.latestFromSubject.x)
 
-    if (nextValue.x < this.minX) nextValue.x = this.minX
-    if (nextValue.x > this.maxX) nextValue.x = this.maxX
-    if (nextValue.y < this.minY) nextValue.y = this.minY
-    if (nextValue.y > this.maxY) nextValue.y = this.maxY
-    this.latestFromSubject = nextValue
+    this.latestFromSubject.y = nextValue.y + deltaY
+    nextValue.y = Math.round(this.latestFromSubject.y)
+
     super._next(nextValue)
   }
 
