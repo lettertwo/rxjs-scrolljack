@@ -1,6 +1,6 @@
-import {Kinematic} from './Kinematic'
 import {KinematicUpdater} from './KinematicUpdater'
 import {computeNextValue} from './computeNextValue'
+import {parseXOpts, parseYOpts} from './parseOpts'
 
 class MomentumUpdater extends KinematicUpdater {
   _init (spring) {
@@ -13,7 +13,7 @@ class MomentumUpdater extends KinematicUpdater {
     spring.netDelta = 0
   }
 
-  _update (value, spring) {
+  _computeNext (value, spring) {
     let {stopped} = this
 
     if (!value.deltaT) {
@@ -45,15 +45,12 @@ class MomentumUpdater extends KinematicUpdater {
     return {...value, ...spring.fromDelta(nd)}
   }
 
-  _shouldScheduleNext (spring) {
+  _shouldGenerateNext (spring) {
     return spring.velocity !== 0
   }
 }
 
-export class Momentum extends Kinematic {
-  static createUpdater (...args) {
-    return new MomentumUpdater(...args)
-  }
-}
+export const momentum = (opts, ...args) =>
+  new MomentumUpdater([parseXOpts(opts), parseYOpts(opts)], ...args)
 
-export default Momentum
+export default momentum

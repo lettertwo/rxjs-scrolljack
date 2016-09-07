@@ -1,62 +1,112 @@
 import {Subscriber} from 'rxjs/Subscriber'
+import {animationFrame} from 'rxjs/scheduler/animationFrame'
+import {from} from 'rxjs/observable/from'
+import {startWith} from 'rxjs/operator/startWith'
+import {takeUntil} from 'rxjs/operator/takeUntil'
+import {mergeMap} from 'rxjs/operator/mergeMap'
+import {mergeStatic as merge} from 'rxjs/operator/merge'
+import {map} from 'rxjs/operator/map'
+import {first} from 'rxjs/operator/first'
+
+/**
+ * MoveOperator converts an observable of delta values to a higher-order
+ * observable that represents a move operation. A move operation is essentially
+ * a series of deltas bounded by an initial start delta and a final stop delta.
+ *
+ * Subclasses may define a `_computeNext` method, which will allow deltas to
+ * be mapped to values before being emitted.
+ *
+ * Subclasses may also define a `_generateNext` method, which should return an
+ * iterable of values to emit after the target has stopped. This allows a
+ * subclass to essentially 'fake' more deltas, i.e., decceleration, snapping
+ * or restorative behaviors, etc.
+ */
 
 export class MoveSubscriber extends Subscriber {
-  constructor (destination, source, stopSource) {
+  constructor (destination, Delta, target, updater, scheduler = animationFrame) {
     super(destination)
-    this.source = source
-    this.stopSource = stopSource
-    this.started = false
+    this.Delta = Delta
+    this.target = target
+    this.updater = updater
+    this.scheduler = scheduler
   }
 
-  _next (value) {
-    if (!this.started) {
-      this.started = true
-      this.sourceSub = this.source._subscribe(this.dispatch)
-      this.add(this.sourceSub)
-      this.stopSub = this.stopSource._subscribe(this.stop)
-      this.add(this.stopSub)
+  start = value => this.updater.start(value)
+
+  stop = value => this.updater.stop(value)
+
+  computeNext = value => this.updater.computeNext(value)
+
+  generateNext = stops => from(
+    this.updater.generateNext(stops, this.scheduler.now()),
+    this.scheduler,
+  )
+
+  _next (starts) {
+    // Create next and stop sources for our move operation.
+    let nextSource = this.Delta.create(this.target)
+    let stopSource = this.Delta.stop(this.target)
+
+    // If we don't have an updater, skip to the end.
+    if (!this.updater) {
+      return merge(
+        nextSource::takeUntil(stopSource)::startWith(starts),
+        stopSource::first(),
+      )
     }
-  }
 
-  _complete () {
-    this.unsub()
-    this.started = false
-    super._complete()
-  }
-
-  unsub () {
-    if (this.sourceSub) {
-      this.remove(this.sourceSub)
-      this.sourceSub.unsubscribe()
-      this.sourceSub = null
+    // If we're extended to compute next values,
+    // map next to the update method.
+    if (typeof this.updater.computeNext === 'function') {
+      nextSource = nextSource::map(this.computeNext)
     }
-    if (this.stopSub) {
-      this.remove(this.stopSub)
-      this.stopSub.unsubscribe()
-      this.stopSub = null
+
+    // If we're extended to compute stop values,
+    // map stop to the update method.
+    if (typeof this.updater.stop === 'function') {
+      nextSource = nextSource::takeUntil(stopSource::map(this.stop))
+    } else {
+      nextSource = nextSource::takeUntil(stopSource)
     }
-  }
 
-  dispatch = value => {
-    this.destination.next(value)
-  }
+    if (typeof this.updater.start === 'function') {
+    // Start with the value that triggered this operation.
+      nextSource = nextSource::startWith(this.start(starts))
+    } else {
+      // Start with the value that triggered this operation.
+      nextSource = nextSource::startWith(starts)
+    }
+    // If we're extended to generate additional next values,
+    // concatenate additional next values after we stop.
+    if (typeof this.updater.generateNext === 'function') {
+      stopSource = stopSource::first()::mergeMap(this.generateNext)
+    } else {
+      stopSource = stopSource::first()
+    }
 
-  stop = value => {
-    this.started = false
-    this.unsub()
+    // Emit the observable of the move operation.
+    // The observerable emits values from the start source until
+    // our stop source emits, then emits values from the stop source
+    // until it completes.
+    super._next(merge(nextSource, stopSource))
   }
 }
 
 export class MoveOperator {
-  constructor (startSource, stopSource) {
-    this.startSource = startSource
-    this.stopSource = stopSource
+  constructor (Delta, target, updater, scheduler) {
+    this.Delta = Delta
+    this.target = target
+    this.updater = updater
+    this.scheduler = scheduler
   }
 
   call (subscriber, source) {
-    const {startSource, stopSource} = this
-    return startSource._subscribe(
-      new MoveSubscriber(subscriber, source, stopSource)
-    )
+    return source._subscribe(new MoveSubscriber(
+      subscriber,
+      this.Delta,
+      this.target,
+      this.updater,
+      this.scheduler,
+    ))
   }
 }

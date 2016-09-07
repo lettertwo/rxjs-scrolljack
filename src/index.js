@@ -1,5 +1,3 @@
-export {ScrollSubject} from './ScrollSubject'
-export {Wheel} from './Wheel'
 export {Touch} from './Touch'
-export {Mouse} from './Mouse'
-export {Keyboard} from './Keyboard'
+export {momentum} from './kinematic/momentum'
+export {anchor} from './kinematic/anchor'

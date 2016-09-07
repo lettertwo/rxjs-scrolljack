@@ -1,34 +1,39 @@
-import {Kinematic} from './Kinematic'
 import {KinematicUpdater} from './KinematicUpdater'
 import {computeNextValue} from './computeNextValue'
+import {parseXOpts, parseYOpts} from './parseOpts'
+
+const F = 1000 / 60  // Default frame rate
 
 class AnchorUpdater extends KinematicUpdater {
-
   _init (spring) {
     spring.velocity = 0
     spring.netDelta = 0
     spring.droppedDelta = 0
   }
 
-  stop () {
+  stop (value) {
     this.time = null
-    super.stop()
+    return super.stop(value)
   }
 
   _catchFrame (value, spring) {
     if (this.stopped) {
       const nv = super._catchFrame(value, spring)
       spring.droppedDelta = spring.toDelta(nv)
+      return nv
     } else {
       spring.droppedDelta = 0
+      return value
     }
   }
 
-  _update (value, spring) {
+  _computeNext (value, spring) {
     let {stopped} = this
     let {netDelta, droppedDelta, stiffness: K, damping: B, precision: P} = spring
 
-    const t = (value.deltaT || 1) / 1000
+    if (!value.deltaT && !value.deltaX && !value.deltaY) return value
+
+    const t = Math.min(F, Math.max(value.deltaT || 1)) / 1000
 
     const initialNetDelta = netDelta
 
@@ -62,15 +67,12 @@ class AnchorUpdater extends KinematicUpdater {
     return {...value, ...spring.fromDelta(newDelta)}
   }
 
-  _shouldScheduleNext (spring) {
+  _shouldGenerateNext (spring) {
     return spring.velocity !== 0 || spring.netDelta !== 0 || spring.droppedDelta !== 0
   }
 }
 
-export class Anchor extends Kinematic {
-  static createUpdater (...args) {
-    return new AnchorUpdater(...args)
-  }
-}
+export const anchor = (opts, ...args) =>
+  new AnchorUpdater([parseXOpts(opts), parseYOpts(opts)], ...args)
 
-export default Anchor
+export default anchor
