@@ -5,44 +5,32 @@ import {parseXOpts, parseYOpts} from './parseOpts'
 class MomentumUpdater extends KinematicUpdater {
   _init (spring) {
     spring.velocity = 0
-    spring.netDelta = 0
+    spring.lastDelta = 0
   }
 
   _start (spring) {
-    spring.velocity = 0
-    spring.netDelta = 0
+    // Reset net delta on start.
+    spring.lastDelta = 0
+  }
+
+  _updateFrame (value, spring) {
+    if (this.stopped) {
+      spring.lastDelta = spring.toDelta(value)
+    }
+    spring.velocity = spring.toVelocity(value)
   }
 
   _computeNext (value, spring) {
-    let {stopped} = this
-
-    if (!value.deltaT) {
-      spring.velocity = 0.2 * spring.velocity
-      return value
-    }
+    // If we haven't stopped, just pass the value through.
+    if (!this.stopped) return value
 
     const t = value.deltaT / 1000
-
-    let delta = spring.toDelta(value)
-
-    // If we haven't stopped, just pass the value through.
-    if (!stopped) {
-      spring.velocity = delta / t
-      spring.netDelta = 0
-      return value
-    }
-
-    let {netDelta, velocity, stiffness: K, damping: B, precision: P} = spring
+    let {lastDelta, velocity, stiffness: K, damping: B, precision: P} = spring
 
     // Compute the result of the current frame.
-    let [nd, nv] = computeNextValue(netDelta, 0, velocity, t, K, B, P)
+    let [nd, nv] = computeNextValue(lastDelta, 0, velocity, t, K, B, P)
 
-    // Update spring spring with current frame results.
-    spring.netDelta = nd
-    spring.velocity = nv
-    spring.droppedDelta = 0
-
-    return {...value, ...spring.fromDelta(nd)}
+    return {...value, ...spring.fromDelta(nd), ...spring.fromVelocity(nv)}
   }
 
   _shouldGenerateNext (spring) {
