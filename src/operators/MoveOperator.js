@@ -8,6 +8,8 @@ import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {map} from 'rxjs/operator/map'
 import {first} from 'rxjs/operator/first'
 
+const F = 1000 / 60  // Default frame rate
+
 /**
  * MoveOperator converts an observable of delta values to a higher-order
  * observable that represents a move operation. A move operation is essentially
@@ -35,10 +37,14 @@ export class MoveSubscriber extends Subscriber {
 
   stop = value => this.updater.stop(value)
 
-  computeNext = value => this.updater.computeNext(value)
+  computeNext = value => {
+    value = this.updater.computeNext(value)
+    this.updater.updateFrame(value)
+    return value
+  }
 
-  generateNext = stops => from(
-    this.updater.generateNext(stops, this.scheduler.now()),
+  createNextSource = stops => from(
+    createNextGenerator(this.scheduler, this.updater, stops, this.scheduler.now()),
     this.scheduler,
   )
 
@@ -76,13 +82,10 @@ export class MoveSubscriber extends Subscriber {
       // Start with the value that triggered this operation.
       nextSource = nextSource::startWith(starts)
     }
+
     // If we're extended to generate additional next values,
     // concatenate additional next values after we stop.
-    if (typeof this.updater.generateNext === 'function') {
-      stopSource = stopSource::first()::mergeMap(this.generateNext)
-    } else {
-      stopSource = stopSource::first()
-    }
+    stopSource = stopSource::first()::mergeMap(this.createNextSource)
 
     // Emit the observable of the move operation.
     // The observerable emits values from the start source until
@@ -108,5 +111,58 @@ export class MoveOperator {
       this.updater,
       this.scheduler,
     ))
+  }
+}
+
+function * createNextGenerator (scheduler, updater, lastValue, time) {
+  while (updater.shouldGenerateNext()) {
+    let {
+      deltaX = 0,
+      deltaY = 0,
+    } = lastValue
+
+    let now = scheduler.now()
+    let deltaT = now - time
+
+    // If it seems like we've dropped a lot of frames, its probably because
+    // this process was backgrounded (switched tabs), so we should restart.
+    if (deltaT > F * 10) {
+      deltaT = F
+    }
+
+    // Calculate the number of frames that have been 'dropped' since the
+    // last update. Dropped frames are updates that should've happened within
+    // a window of time, but didn't, usually because of jank, normalizing
+    // optimizations, or other delays introduced by the user/browser/runtime.
+    let droppedFrames = Math.floor(deltaT / F)
+
+    let newValue = {deltaX, deltaY, deltaT}
+
+    if (droppedFrames) {
+      let droppedValue = {
+        deltaX: deltaX / (droppedFrames + 1),
+        deltaY: deltaY / (droppedFrames + 1),
+        deltaT: F,
+      }
+      // Subtract dropped frames' deltas from the original deltas
+      // to get the deltas for just the latest frame.
+      deltaX = deltaX - droppedValue.deltaX * droppedFrames
+      deltaY = deltaY - droppedValue.deltaY * droppedFrames
+      deltaT = deltaT - droppedValue.deltaT * droppedFrames
+
+      // Apply the dropped frame deltas to the destination.
+      for (let i = 0; i < droppedFrames; i++) {
+        droppedValue = updater.computeNext(droppedValue)
+        updater.catchFrame(droppedValue)
+      }
+
+      newValue = droppedValue
+    }
+
+    time = now
+    lastValue = updater.computeNext(newValue)
+    updater.updateFrame(lastValue)
+
+    yield lastValue
   }
 }
