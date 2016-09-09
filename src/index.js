@@ -1,4 +1,5 @@
 export {Touch} from './Touch'
+export {ScrollBehavior} from './ScrollBehavior'
 export {momentum} from './kinematic/momentum'
 export {anchor} from './kinematic/anchor'
 export {composeUpdaters} from './kinematic/composeUpdaters'
