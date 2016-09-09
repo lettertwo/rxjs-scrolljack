@@ -11,6 +11,12 @@ export class Updater {
     this._init(...args)
   }
 
+  clone () {
+    const updater = new this.constructor()
+    updater.stopped = this.stopped
+    return this._clone(updater)
+  }
+
   start (value) {
     this.stopped = false
     this._start(value)
@@ -40,6 +46,8 @@ export class Updater {
   }
 
   _init () { /* noop */ }
+
+  _clone (target) { return target }
 
   _start (value) { /* noop */ }
 

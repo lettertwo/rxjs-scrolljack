@@ -1,9 +1,14 @@
 import Updater from './Updater'
 
 export class KinematicUpdater extends Updater {
-  _init (springs) {
+  _init (springs = []) {
     this.springs = springs
     this.springs.forEach(this._initSpring)
+  }
+
+  _clone (target) {
+    target.springs = this.springs.map(this._cloneSpring)
+    return target
   }
 
   _start (value) {
@@ -38,6 +43,8 @@ export class KinematicUpdater extends Updater {
   }
 
   _initSpring (spring) { /* noop */ }
+
+  _cloneSpring (spring) { return {...spring} }
 
   _startSpring (spring) { /* noop */ }
 
