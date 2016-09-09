@@ -1,70 +1,44 @@
-import {createIterator} from 'iterall'
+import {Updater} from './Updater'
 
-class ComposedUpdater {
-  constructor (updaters) {
+class ComposedUpdater extends Updater {
+  _init (updaters) {
     this.updaters = updaters.map(updater =>
       typeof updater === 'function' ? updater() : updater
     )
   }
 
-  start (value) {
-    return this.updaters.reduce(this.__applyStart, value)
+  _start (value) {
+    return this.updaters.reduce(this._applyStart, value)
   }
 
-  stop (value) {
-    return this.updaters.reduce(this.__applyStop, value)
+  _stop (value) {
+    return this.updaters.reduce(this._applyStop, value)
   }
 
-  computeNext = value => {
-    return this.updaters.reduce(this.__applyComputeNext, value)
+  _computeNext = value => {
+    return this.updaters.reduce(this._applyComputeNext, value)
   }
 
-  catchFrame (value) {
+  _catchFrame (value) {
     for (const updater of this.updaters) {
       updater.catchFrame(value)
     }
   }
 
-  updateFrame (value) {
+  _updateFrame (value) {
     for (const updater of this.updaters) {
       updater.updateFrame(value)
     }
   }
 
-  shouldGenerateNext () {
-    return this.updaters.some(this.__callShouldGenerateNext)
+  _shouldGenerateNext () {
+    return this.updaters.some(this._callShouldGenerateNext)
   }
 
-  generateNext = function * (lastValue, time) {
-    let count = this.updaters.length
-
-    // Map update generators to iterators.
-    let updaters = this.updaters.map(updater =>
-      createIterator(updater.generateNext(lastValue, time))
-    )
-
-    while (count) {
-      for (let i = 0; i < count; i++) {
-        const updater = updaters[i]
-        let {value, done} = updater.next()
-        if (!done) {
-          lastValue = value
-        } else {
-          updaters.splice(i, 1)
-          count--
-        }
-      }
-
-      yield lastValue
-    }
-  }
-
-  __applyStart = (value, updater) => updater.start(value)
-  __applyStop = (value, updater) => updater.stop(value)
-  __applyComputeNext = (value, updater) => updater.computeNext(value)
-  __applyCatchFrame = (value, updater) => updater.catchFrame(value)
-  __applyUpdateFrame = (value, updater) => updater.updateFrame(value)
-  __callShouldGenerateNext = updater => updater.shouldGenerateNext()
+  _applyStart = (value, updater) => updater.start(value)
+  _applyStop = (value, updater) => updater.stop(value)
+  _applyComputeNext = (value, updater) => updater.computeNext(value)
+  _callShouldGenerateNext = updater => updater.shouldGenerateNext()
 }
 
 export const composeUpdaters = (...updaters) => new ComposedUpdater(updaters)

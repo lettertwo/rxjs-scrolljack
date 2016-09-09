@@ -1,84 +1,59 @@
-export class KinematicUpdater {
-  constructor (springs) {
+import Updater from './Updater'
+
+export class KinematicUpdater extends Updater {
+  _init (springs) {
     this.springs = springs
-    this.stopped = true
-    this.springs.forEach(this.__doInit)
+    this.springs.forEach(this._initSpring)
   }
 
-  start (value) {
-    this.stopped = false
-    this.springs.forEach(this.__doStart)
-    return this.computeNext(value)
+  _start (value) {
+    this.springs.forEach(this._startSpring)
   }
 
-  stop (value) {
-    this.stopped = true
-    this.springs.forEach(this.__doStop)
-    return this.computeNext(value)
+  _stop (value) {
+    this.springs.forEach(this._stopSpring)
   }
 
-  computeNext = value => {
+  _computeNext (value) {
     if (!value.deltaT && !value.deltaX && !value.deltaY) return value
-    return this.springs.reduce(this.__reduceNext, value)
+    return this.springs.reduce(this._reduceNext, value)
   }
 
-  shouldGenerateNext () {
-    return this.springs.some(this.__doShouldGenerateNext)
+  _shouldGenerateNext () {
+    return this.springs.some(this._shouldGenerateNextSpring)
   }
 
-  updateFrame (value) {
+  _updateFrame (value) {
     if (!value.deltaT && !value.deltaX && !value.deltaY) return
     for (const spring of this.springs) {
-      this._updateFrame(value, spring)
+      this._updateFrameSpring(value, spring)
     }
   }
 
-  catchFrame (value) {
-    if (!value.deltaT && !value.deltaX && !value.deltaY) return value
+  _catchFrame (value) {
+    if (!value.deltaT && !value.deltaX && !value.deltaY) return
     for (const spring of this.springs) {
-      this._catchFrame(value, spring)
+      this._catchFrameSpring(value, spring)
     }
   }
 
-  _init (spring) { /* noop */ }
+  _initSpring (spring) { /* noop */ }
 
-  _start (spring) { /* noop */ }
+  _startSpring (spring) { /* noop */ }
 
-  _stop (spring) { /* noop */ }
+  _stopSpring (spring) { /* noop */ }
 
-  _shouldGenerateNext (spring) {
-    return false
+  _shouldGenerateNextSpring (spring) { return false }
+
+  _reduceNext = (value, spring) => {
+    return this._computeNextSpring(value, spring)
   }
 
-  _computeNext (value, spring) {
-    return value
-  }
+  _computeNextSpring (value, spring) { return value }
 
-  _catchFrame (value, spring) {
-    this._updateFrame(value, spring)
-  }
+  _catchFrameSpring (value, spring) { /* noop */ }
 
-  _updateFrame (value, spring) { /* noop */ }
-
-  __doInit = spring => {
-    this._init(spring)
-  }
-
-  __doStart = spring => {
-    this._start(spring)
-  }
-
-  __doStop = spring => {
-    this._stop(spring)
-  }
-
-  __doShouldGenerateNext = spring => {
-    return this._shouldGenerateNext(spring)
-  }
-
-  __reduceNext = (value, spring) => {
-    return this._computeNext(value, spring)
-  }
+  _updateFrameSpring (value, spring) { /* noop */ }
 }
 
 export default KinematicUpdater
