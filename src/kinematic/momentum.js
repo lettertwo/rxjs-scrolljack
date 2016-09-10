@@ -20,6 +20,11 @@ class MomentumUpdater extends KinematicUpdater {
     spring.velocity = spring.toVelocity(value)
   }
 
+  _computeNext (value) {
+    if (!value.deltaT && !value.deltaX && !value.deltaY) return value
+    return super._computeNext(value)
+  }
+
   _computeNextSpring (value, spring) {
     // If we haven't stopped, just pass the value through.
     if (!this.stopped) return value

@@ -22,6 +22,11 @@ class AnchorUpdater extends KinematicUpdater {
     spring.droppedDelta = 0
   }
 
+  _computeNext (value) {
+    if (!value.deltaT && !value.deltaX && !value.deltaY) return value
+    return super._computeNext(value)
+  }
+
   _computeNextSpring (value, spring) {
     let {stopped} = this
     let {netDelta, droppedDelta, stiffness: K, damping: B, precision: P} = spring
