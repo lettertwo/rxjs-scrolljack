@@ -13,12 +13,18 @@ export class ScrollBehavior extends BehaviorSubject {
     this.rect = {...rect}
 
     const {x = 0, y = 0} = this.rect
+
     this._value = {x, y, ...initialValue}
 
     const boundsUpdater = bounds(this.rect, Delta.createValue({
       deltaX: this._value.x,
       deltaY: this._value.y,
     }))
+
+    const nextValue = boundsUpdater.computeNext(Delta.createValue())
+    boundsUpdater.updateFrame(nextValue)
+    this._value.x += nextValue.deltaX
+    this._value.y += nextValue.deltaY
 
     if (updater instanceof UpdaterStack) {
       // If the passed in updater is an updater stack,
