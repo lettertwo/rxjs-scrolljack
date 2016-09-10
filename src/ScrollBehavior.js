@@ -1,26 +1,43 @@
 import {Subscriber} from 'rxjs/Subscriber'
 import {BehaviorSubject} from 'rxjs/BehaviorSubject'
-import {createUpdaterStack} from './kinematic/createUpdaterStack'
+import {UpdaterStack} from './kinematic/UpdaterStack'
 import {momentum} from './kinematic/momentum'
 import {anchor} from './kinematic/anchor'
 
 export class ScrollBehavior extends BehaviorSubject {
-  constructor (target, Delta, rect, updaterStack, initialValue) {
+  constructor (target, Delta, rect, updater, initialValue) {
     super()
     this.target = target
     this.Delta = Delta
     this.rect = {...rect}
     const {x = 0, y = 0} = this.rect
     this._value = {x, y, ...initialValue}
-    this.updaterStack = updaterStack || createUpdaterStack()
-    this.source = Delta.move(this.target, this.updaterStack)
+
+    if (updater instanceof UpdaterStack) {
+      // If the passed in updater is an updater stack, clone it.
+      this.updater = updater.clone()
+    } else if (updater) {
+      // Otherwise, if it's some other kind of updater,
+      // make a new updater stack out of the updater.
+      this.updater = UpdaterStack.create(updater)
+    }
+
+    this.source = Delta.move(this.target, this.updater)
     this.operator = new ScrollBehaviorOperator(this.source, this.rect)
   }
 
   liftUpdater (updater) {
     const {target, Delta, rect, _value} = this
-    let updaterStack = this.updaterStack.clone()
-    updaterStack.add(updater)
+    let updaterStack = this.updater
+    if (updaterStack instanceof UpdaterStack) {
+      // If this updater is already an updater stack, clone it.
+      updaterStack = updaterStack.clone()
+    } else {
+      // Otherwise, make a new updater stack.
+      updaterStack = new UpdaterStack()
+    }
+    // Add the updater we're 'lifting' to the new stack.
+    updaterStack.push(updater)
     return new ScrollBehavior(target, Delta, rect, updaterStack, _value)
   }
 

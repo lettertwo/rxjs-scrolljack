@@ -1,6 +1,10 @@
 import Updater from './Updater'
 
-class UpdaterStack extends Updater {
+export class UpdaterStack extends Updater {
+  static create (...updaters) {
+    return new UpdaterStack(updaters)
+  }
+
   _init (updaters) {
     this.updaters = new Map()
     if (updaters && updaters.length) {
@@ -44,6 +48,35 @@ class UpdaterStack extends Updater {
       if (this.updaters.has(updater)) {
         this.updaters.delete(updater)
       }
+    }
+  }
+
+  push (...updaters) {
+    this._updaters = null
+    this.add(...updaters)
+  }
+
+  pop () {
+    if (this.updaters.size) {
+      this.remove(this.getUpdaters().pop())
+      this._updaters = null
+    }
+  }
+
+  shift (...updaters) {
+    this._updaters = null
+    const entries = this.updaters.entries()
+    this.clear()
+    this.push(...updaters)
+    for (const [k, v] of entries) {
+      this.updaters.set(k, v)
+    }
+  }
+
+  unshift () {
+    if (this.updaters.size) {
+      this.remove(this.getUpdaters().unshift())
+      this._updaters = null
     }
   }
 
@@ -99,6 +132,4 @@ class UpdaterStack extends Updater {
   _callShouldGenerateNext = updater => updater.shouldGenerateNext()
 }
 
-export const createUpdaterStack = (...updaters) => new UpdaterStack(updaters)
-
-export default createUpdaterStack
+export default UpdaterStack
