@@ -1,31 +1,46 @@
 import Updater from './Updater'
 
 export class KinematicUpdater extends Updater {
-  _init (springs = []) {
+  _init (springs = [], ...args) {
     this.springs = springs
-    this.springs.forEach(this._initSpring)
+    for (const spring of this.springs) {
+      this._initSpring(spring, ...args)
+    }
   }
 
   _clone (target) {
-    target.springs = this.springs.map(this._cloneSpring)
+    target.springs = []
+    for (const spring of this.springs) {
+      target.springs.push(this._cloneSpring(spring))
+    }
     return target
   }
 
   _start (value) {
-    this.springs.forEach(this._startSpring)
+    for (const spring of this.springs) {
+      this._startSpring(spring)
+    }
   }
 
   _stop (value) {
-    this.springs.forEach(this._stopSpring)
+    for (const spring of this.springs) {
+      this._stopSpring(spring)
+    }
   }
 
   _computeNext (value) {
     if (!value.deltaT && !value.deltaX && !value.deltaY) return value
-    return this.springs.reduce(this._reduceNext, value)
+    for (const spring of this.springs) {
+      value = this._computeNextSpring(value, spring)
+    }
+    return value
   }
 
   _shouldGenerateNext () {
-    return this.springs.some(this._shouldGenerateNextSpring)
+    for (const spring of this.springs) {
+      if (this._shouldGenerateNextSpring(spring)) return true
+    }
+    return false
   }
 
   _updateFrame (value) {
@@ -51,10 +66,6 @@ export class KinematicUpdater extends Updater {
   _stopSpring (spring) { /* noop */ }
 
   _shouldGenerateNextSpring (spring) { return false }
-
-  _reduceNext = (value, spring) => {
-    return this._computeNextSpring(value, spring)
-  }
 
   _computeNextSpring (value, spring) { return value }
 
