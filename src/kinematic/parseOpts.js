@@ -65,3 +65,27 @@ export const parseYOpts = opts => parseOpts({
   fromVelocity: toVelocityYFromVelocity,
   ...opts,
 })
+
+export const parseBoundsOpts = optsLike => {
+  if (optsLike.min == null) {
+    throw new Error('A `min` option is required.')
+  }
+
+  if (optsLike.max == null) {
+    throw new Error('A `max` option is required.')
+  }
+
+  return optsLike
+}
+
+export const parseBoundsXOpts = opts => parseBoundsOpts({
+  min: opts.x || 0,
+  max: opts.width || 0,
+  ...parseXOpts(opts),
+})
+
+export const parseBoundsYOpts = opts => parseBoundsOpts({
+  min: opts.y || 0,
+  max: opts.height || 0,
+  ...parseYOpts(opts),
+})

@@ -3,6 +3,7 @@ import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 import {UpdaterStack} from './kinematic/UpdaterStack'
 import {momentum} from './kinematic/momentum'
 import {anchor} from './kinematic/anchor'
+import {bounds} from './kinematic/bounds'
 
 export class ScrollBehavior extends BehaviorSubject {
   constructor (target, Delta, rect, updater, initialValue) {
@@ -14,12 +15,17 @@ export class ScrollBehavior extends BehaviorSubject {
     this._value = {x, y, ...initialValue}
 
     if (updater instanceof UpdaterStack) {
-      // If the passed in updater is an updater stack, clone it.
+      // If the passed in updater is an updater stack,
+      // clone it and add a bounds updater.
       this.updater = updater.clone()
+      this.updater.push(bounds(this.rect))
     } else if (updater) {
       // Otherwise, if it's some other kind of updater,
-      // make a new updater stack out of the updater.
-      this.updater = UpdaterStack.create(updater)
+      // make a new updater stack out of the updater plus a bounds updater.
+      this.updater = UpdaterStack.create(updater, bounds(this.rect))
+    } else {
+      // Otherwise, we have no other updaters, so just make a bounds updater.
+      this.updater = bounds(this.rect)
     }
 
     this.source = Delta.move(this.target, this.updater)
@@ -30,8 +36,11 @@ export class ScrollBehavior extends BehaviorSubject {
     const {target, Delta, rect, _value} = this
     let updaterStack = this.updater
     if (updaterStack instanceof UpdaterStack) {
-      // If this updater is already an updater stack, clone it.
+      // If this updater is already an updater stack, clone it,
+      // but pop off the current bounds updater.
+      // (The ctor will add a bounds updater back to the end of the stack).
       updaterStack = updaterStack.clone()
+      updaterStack.pop()
     } else {
       // Otherwise, make a new updater stack.
       updaterStack = new UpdaterStack()
