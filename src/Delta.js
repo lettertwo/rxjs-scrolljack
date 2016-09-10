@@ -35,8 +35,9 @@ export class Delta extends Observable {
   }
 
   static createValue (opts) {
+    opts = {...DEFAULT_VALUE, ...opts}
     const {deltaT, deltaX, deltaY, velocityX, velocityY} = opts
-    return {...DEFAULT_VALUE, deltaT, deltaX, deltaY, velocityX, velocityY}
+    return {deltaT, deltaX, deltaY, velocityX, velocityY}
   }
 
   static create (target) {
