@@ -1,11 +1,13 @@
 import {KinematicUpdater} from './KinematicUpdater'
 import {parseBoundsXOpts, parseBoundsYOpts} from './parseOpts'
 
-const F = 1000 / 60  // Default frame rate
-
 class BoundsUpdater extends KinematicUpdater {
-  _initSpring (spring) {
-    spring.netDelta = spring.min
+  _initSpring (spring, initialValue) {
+    if (initialValue) {
+      spring.netDelta = spring.toDelta(initialValue)
+    } else {
+      spring.netDelta = spring.min
+    }
   }
 
   _updateFrameSpring (value, spring) {
