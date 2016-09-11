@@ -48,11 +48,11 @@ export class Delta extends Observable {
     return new this(target)::takeUntil(this.stop(target))
   }
 
-  static move (target, updater, scheduler) {
+  static move (target, updater, scheduler, root = getRoot()) {
     if (typeof updater === 'function') updater = updater()
     return this
       .start(target)
-      .lift(new MoveOperator(this, getRoot(), updater, scheduler))
+      .lift(new MoveOperator(this, root, updater, scheduler))
       ::_switch()
   }
 
