@@ -1,48 +1,33 @@
 import $$observable from 'symbol-observable'
-import {Observable} from 'rxjs/Observable'
-import {takeUntil} from 'rxjs/operator/takeUntil'
-import {fromHijackedEvent} from './operators/fromHijackedEvent'
+import {Delta} from './Delta'
 import {DeltaOperator} from './operators/DeltaOperator'
-import {
-  WheelStartOperator,
-  WheelMoveOperator,
-  WheelStopOperator,
-} from './operators/wheel'
+import {fromEmulatedWheelEvent} from './operators/fromEmulatedWheelEvent'
 
-const WHEEL = 'wheel'
+const WHEEL_START = 'wheelstart'
+const WHEEL_MOVE = 'wheelmove'
+const WHEEL_END = 'wheelend'
 
-export class Wheel extends Observable {
-  constructor (target) {
+export class Wheel extends Delta {
+  constructor (target, event = WHEEL_MOVE, ...hijackArgs) {
     if (typeof target[$$observable] === 'function') {
-      super()
-      this.source = target[$$observable]()
+      super(target)
     } else {
-      super()
-      this.source = fromHijackedEvent(target, WHEEL)
-      this.source.operator = new DeltaOperator()
+      const source = fromEmulatedWheelEvent(target, event, ...hijackArgs)
+      source.operator = new DeltaOperator()
+      super(source)
     }
   }
 
-  lift (operator) {
-    const observable = new this.constructor(this)
-    observable.operator = operator
-    return observable
+  static start (target, event = WHEEL_START) {
+    return super.start(target, event)
   }
 
-  static from (target) {
-    return new Wheel(target)::takeUntil(Wheel.stop(target))
+  static move (target, updater, scheduler) {
+    return super.move(target, updater, scheduler, target)
   }
 
-  static start (target) {
-    return new Wheel(target).lift(new WheelStartOperator())
-  }
-
-  static move (target) {
-    return new Wheel(target).lift(new WheelMoveOperator())
-  }
-
-  static stop (target) {
-    return new Wheel(target).lift(new WheelStopOperator())
+  static stop (target, event = WHEEL_END) {
+    return super.stop(target, event)
   }
 }
 
