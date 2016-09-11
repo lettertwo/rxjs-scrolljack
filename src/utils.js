@@ -7,3 +7,8 @@ export const getRoot = () => (
     ? typeof document === 'undefined'
       ? global : document : window
 )
+
+export const createWheelEventFrom = (value, type) => {
+  const event = new WheelEvent(type, value)
+  return event
+}
