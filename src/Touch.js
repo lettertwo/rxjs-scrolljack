@@ -7,16 +7,16 @@ const TOUCH_END = 'touchend'
 const excludeMultiTouch = e => e.touches.length <= 1
 
 export class Touch extends Delta {
-  constructor (target, event = TOUCH_MOVE) {
-    super(target, event, excludeMultiTouch)
+  constructor (target) {
+    super(target, TOUCH_MOVE, excludeMultiTouch)
   }
 
-  static start (target, event = TOUCH_START) {
-    return super.start(target, event)
+  static start (target) {
+    return super.start(target, TOUCH_START)
   }
 
-  static stop (target, event = TOUCH_END) {
-    return super.stop(target, event)
+  static stop (target) {
+    return super.stop(target, TOUCH_END)
   }
 }
 
