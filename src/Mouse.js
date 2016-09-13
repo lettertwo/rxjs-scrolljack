@@ -5,8 +5,8 @@ const MOUSE_MOVE = 'mousemove'
 const MOUSE_UP = 'mouseup'
 
 export class Mouse extends Delta {
-  constructor (target) {
-    super(target, MOUSE_MOVE)
+  constructor (target, event = MOUSE_MOVE) {
+    super(target, event)
   }
 
   static start (target) {

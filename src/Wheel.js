@@ -8,11 +8,11 @@ const WHEEL_MOVE = 'wheelmove'
 const WHEEL_END = 'wheelend'
 
 export class Wheel extends Delta {
-  constructor (target) {
+  constructor (target, event = WHEEL_MOVE) {
     if (typeof target[$$observable] === 'function') {
       super(target)
     } else {
-      const source = fromEmulatedWheelEvent(target, WHEEL_MOVE)
+      const source = fromEmulatedWheelEvent(target, event)
       source.operator = new DeltaOperator()
       super(source)
     }
