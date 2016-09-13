@@ -1,0 +1,22 @@
+{
+  "scripts": {
+    "start": "./node_modules/.bin/babel-node ./server.js --presets modern-node,react,stage-0"
+  },
+  "devDependencies": {
+    "babel-cli": "6.10.1",
+    "babel-core": "6.10.4",
+    "babel-loader": "6.2.4",
+    "babel-preset-modern-node": "3.2.0",
+    "babel-preset-react": "6.11.1",
+    "babel-preset-stage-0": "6.5.0",
+    "express": "4.14.0",
+    "react": "15.3.1",
+    "react-dom": "15.3.1",
+    "webpack": "2.1.0-beta.2",
+    "webpack-dev-middleware": "1.7.0",
+    "webpack-dev-server": "1.15.1"
+  },
+  "engines": {
+    "node": "6.4.0"
+  }
+}
