@@ -25,10 +25,10 @@ const F = 1000 / 60  // Default frame rate
  */
 
 export class MoveSubscriber extends Subscriber {
-  constructor (destination, Delta, target, updater, scheduler = animationFrame) {
+  constructor (destination, nextSource, stopSource, updater, scheduler = animationFrame) {
     super(destination)
-    this.Delta = Delta
-    this.target = target
+    this.nextSource = nextSource
+    this.stopSource = stopSource
     this.updater = updater
     this.scheduler = scheduler
   }
@@ -49,9 +49,8 @@ export class MoveSubscriber extends Subscriber {
   )
 
   _next (starts) {
-    // Create next and stop sources for our move operation.
-    let nextSource = this.Delta.create(this.target)
-    let stopSource = this.Delta.stop(this.target)
+    // Start with next and stop sources for our move operation.
+    let {nextSource, stopSource} = this
 
     // If we don't have an updater, skip to the end.
     if (!this.updater) {
@@ -96,9 +95,9 @@ export class MoveSubscriber extends Subscriber {
 }
 
 export class MoveOperator {
-  constructor (Delta, target, updater, scheduler) {
-    this.Delta = Delta
-    this.target = target
+  constructor (nextSource, stopSource, updater, scheduler) {
+    this.nextSource = nextSource
+    this.stopSource = stopSource
     this.updater = updater
     this.scheduler = scheduler
   }
@@ -106,8 +105,8 @@ export class MoveOperator {
   call (subscriber, source) {
     return source._subscribe(new MoveSubscriber(
       subscriber,
-      this.Delta,
-      this.target,
+      this.nextSource,
+      this.stopSource,
       this.updater,
       this.scheduler,
     ))

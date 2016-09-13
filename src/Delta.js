@@ -50,9 +50,11 @@ export class Delta extends Observable {
 
   static move (target, updater, scheduler, root = getRoot()) {
     if (typeof updater === 'function') updater = updater()
+    const nextSource = this.create(root)
+    const stopSource = this.stop(root)
     return this
       .start(target)
-      .lift(new MoveOperator(this, root, updater, scheduler))
+      .lift(new MoveOperator(nextSource, stopSource, updater, scheduler))
       ::_switch()
   }
 
