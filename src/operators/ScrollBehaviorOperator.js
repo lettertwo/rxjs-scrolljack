@@ -41,13 +41,13 @@ export class ScrollBehaviorSubscriber extends Subscriber {
 }
 
 export class ScrollBehaviorOperator {
-  constructor (source, rect) {
-    this.source = source
+  constructor (deltaSource, rect) {
+    this.deltaSource = deltaSource
     this.rect = rect
   }
 
   call (subscriber, behavior) {
-    return this.source.subscribe(
+    return this.deltaSource.subscribe(
       new ScrollBehaviorSubscriber(subscriber, behavior, this.rect)
     )
   }
