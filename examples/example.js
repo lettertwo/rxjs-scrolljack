@@ -98,7 +98,8 @@ function main () {
               background:
                 linear-gradient(to right, pink, transparent, gray),
                 linear-gradient(to bottom, pink, transparent, gray),
-                repeating-linear-gradient(to right bottom, pink, pink 10vw, gray 10vw, gray 20vw);
+                repeating-linear-gradient(to right, transparent, transparent 10vw, gray 10vw, gray 20vw),
+                repeating-linear-gradient(to bottom, pink, pink 10vw, transparent 10vw, transparent 20vw);
             "/>
           </div>
         </div>
