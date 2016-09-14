@@ -22,6 +22,21 @@ export class UpdaterStack extends Updater {
     return target
   }
 
+  slice (begin, end) {
+    const stack = new this.constructor()
+    stack.stopped = this.stopped
+    stack.startValue = this.startValue
+    if (this.updaters.size) {
+      const entries = Array.from(this.updaters.entries()).slice(begin, end)
+      for (const [k, v] of entries) {
+        stack.updaters.set(k, v.clone())
+      }
+    }
+    return stack
+  }
+
+  get size () { return this.updaters.size }
+
   getUpdaters () {
     if (!this._updaters) {
       this._updaters = Array.from(this.updaters.values())
