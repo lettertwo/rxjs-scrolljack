@@ -6,23 +6,32 @@ import {anchor} from './kinematic/anchor'
 import {bounds} from './kinematic/bounds'
 
 export class ScrollBehavior extends BehaviorSubject {
-  constructor (target, Delta, rect, updater, initialValue) {
-    super()
-    this.target = target
-    this.Delta = Delta
-    this.rect = {...rect}
+  constructor (target, DeltaOrUpdater, rect, updater, initialValue) {
+    if (target instanceof ScrollBehavior) {
+      super()
+      this.source = target
+      this.target = target.target
+      this.Delta = target.Delta
+      this.rect = {...target.rect}
+      this._value = {...target._value}
+      updater = DeltaOrUpdater
+    } else {
+      super()
+      this.target = target
+      this.Delta = DeltaOrUpdater
+      this.rect = {...rect}
 
-    const {x = 0, y = 0} = this.rect
+      const {x = 0, y = 0} = this.rect
+      this._value = {x, y, ...initialValue}
+    }
 
-    this._value = {x, y, ...initialValue}
-
-    const boundsUpdater = bounds(this.rect, Delta.createValue({
+    this.bounds = bounds(this.rect, this.Delta.createValue({
       deltaX: this._value.x,
       deltaY: this._value.y,
     }))
 
-    const nextValue = boundsUpdater.computeNext(Delta.createValue())
-    boundsUpdater.updateFrame(nextValue)
+    const nextValue = this.bounds.computeNext(this.Delta.createValue())
+    this.bounds.updateFrame(nextValue)
     this._value.x += nextValue.deltaX
     this._value.y += nextValue.deltaY
 
@@ -30,50 +39,54 @@ export class ScrollBehavior extends BehaviorSubject {
       // If the passed in updater is an updater stack,
       // clone it and add a bounds updater.
       this.updater = updater.clone()
-      this.updater.push(boundsUpdater)
+      this.updater.push(this.bounds)
     } else if (updater) {
       // Otherwise, if it's some other kind of updater,
       // make a new updater stack out of the updater plus a bounds updater.
-      this.updater = UpdaterStack.create(updater, boundsUpdater)
+      this.updater = UpdaterStack.create(updater, this.bounds)
     } else {
       // Otherwise, we have no other updaters, so just make a bounds updater.
-      this.updater = boundsUpdater
+      this.updater = this.bounds
     }
 
-    this.source = Delta.move(this.target, this.updater)
-    this.operator = new ScrollBehaviorOperator(this.source, this.rect)
+    const deltaSource = this.Delta.move(this.target, this.updater)
+    this.operator = new ScrollBehaviorOperator(deltaSource, this.rect)
+  }
+
+  _subscribe (subscriber) {
+    const subscription = super._subscribe(subscriber)
+
+    if (this.source instanceof ScrollBehavior) {
+      subscription.add(this.source._subscribe(this))
+    }
+
+    return subscription
   }
 
   liftUpdater (updater) {
-    const {target, Delta, rect, _value} = this
-    let updaterStack = this.updater
-    if (updaterStack instanceof UpdaterStack) {
-      // If this updater is already an updater stack, clone it,
-      // but pop off the current bounds updater.
-      // (The ctor will add a bounds updater back to the end of the stack).
-      updaterStack = updaterStack.clone()
-      updaterStack.pop()
-    } else {
-      // Otherwise, make a new updater stack.
-      updaterStack = new UpdaterStack()
+    if (this.updater instanceof UpdaterStack && this.updater.size > 1) {
+      // If this.updater is an updater stack, clone it, slicing off the
+      // current bounds updater (always last in the stack) and adding
+      // the updater we're 'lifting' (The ctor will add a bounds updater
+      // to the end of the stack).
+      updater = this.updater.slice(-1).add(updater)
     }
-    // Add the updater we're 'lifting' to the new stack.
-    updaterStack.push(updater)
-    return new ScrollBehavior(target, Delta, rect, updaterStack, _value)
+    return new ScrollBehavior(this, updater)
   }
 
-  startWith (initialValue) {
-    const {target, Delta, rect, _value} = this
+  next (value) {
+    let nextDelta = this.Delta.createValue({
+      deltaX: value.x - this._value.x,
+      deltaY: value.y - this._value.y,
+    })
 
-    let updater
-    if (this.updater instanceof UpdaterStack) {
-      updater = this.updater.clone()
-      updater.pop()
-    }
+    nextDelta = this.bounds.computeNext(nextDelta)
+    this.updater.updateFrame(nextDelta)
 
-    initialValue = {..._value, ...initialValue}
-
-    return new ScrollBehavior(target, Delta, rect, updater, initialValue)
+    return super.next({
+      x: this._value.x + nextDelta.deltaX,
+      y: this._value.y + nextDelta.deltaY,
+    })
   }
 
   momentumX (opts) {
