@@ -140,17 +140,37 @@ function main () {
     .map(() => getScrollBounds(content, container))
     .startWith(getScrollBounds(content, container))
 
-  const lastValue = new Rx.Subject().startWith({x: 0, y: 0})
+  /**
+   * Create a Subject for our scroll offset updates.
+   * We use a Subject so that it can both receive updates
+   * from scroll behavior (`next()`) as well as
+   * dispatch updates to our inputs (`subscribe()`).
+   * @type {Subject<Offset>}
+   */
+  const updateOffset = new Rx.Subject()
 
   /**
-   * The scroll offset as the shape `{x, y}`.
+   * Keep track of the last scroll offset.
+   * We merge this with input values and apply
+   * the generated offsets to the scroll behavior.
+   * @type {Observable<Offset>}
+   */
+  const lastOffset = updateOffset.multicast(new Rx.BehaviorSubject())
+
+  // Persist the last offset between subscriptions.
+  lastOffset.connect()
+  // Seed updates with an initial offset.
+  updateOffset.next({x: 0, y: 0})
+
+  /**
+   * Merge input values with the last offset into the shape `{x, y}`.
    * This is a combination of values from the input fields,
    * plus the last offset from the scroll behavior.
    * @type {Observable<Offset>}
    */
-  const input = Rx.Observable.merge(
-    valueFromInput(inputX).withLatestFrom(lastValue, (x, v) => ({...v, x})),
-    valueFromInput(inputY).withLatestFrom(lastValue, (y, v) => ({...v, y})),
+  let input = Rx.Observable.merge(
+    valueFromInput(inputX).withLatestFrom(lastOffset, (x, v) => ({...v, x})),
+    valueFromInput(inputY).withLatestFrom(lastOffset, (y, v) => ({...v, y})),
   )
 
   /**
@@ -161,12 +181,20 @@ function main () {
    */
   const offset = bounds.switchMap(bounds => {
     // We create a new ScrollBehavior whenever the bounds change.
-    const scrollBehavior = new ScrollBehavior(container, Delta, bounds, momentum)
-    // const scrollBehavior = new ScrollBehavior(container, Delta, bounds)
-    return input
-      .do(scrollBehavior)
-      .mergeMapTo(scrollBehavior)
-      .do(lastValue)
+    const scrollBehavior = new ScrollBehavior(container, Delta, bounds)
+
+    const inputs = lastOffset
+      .first()  // Start with the last offset.
+      .concat(input) // Concatenate input.
+      // .concat(input.do(v => console.log('input', v))) // Concatenate input.
+      .do(scrollBehavior)  // Update scrollBehavior with input.
+
+    const outputs = scrollBehavior
+      .momentum()
+      .skip(1)  // Skip the first update because it's the last offset!
+      .do(updateOffset)  // Update offset with scrollBehavior output.
+
+    return Rx.Observable.combineLatest(inputs, outputs, (i, o) => o)
   })
 
   /**
