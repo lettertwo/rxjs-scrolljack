@@ -63,14 +63,22 @@ export class ScrollBehavior extends BehaviorSubject {
     return subscription
   }
 
-  liftUpdater (updater) {
+  cloneUpdater () {
     if (this.updater instanceof UpdaterStack && this.updater.size > 1) {
       // If this.updater is an updater stack, clone it, slicing off the
-      // current bounds updater (always last in the stack) and adding
-      // the updater we're 'lifting' (The ctor will add a bounds updater
-      // to the end of the stack).
-      updater = this.updater.slice(-1).add(updater)
+      // current bounds updater (always last in the stack).
+      return this.updater.slice(-1)
+    } else {
+      return null
     }
+  }
+
+  liftUpdater (updater) {
+    // Clone our updater, if we have one. If we do, it's an updater stack,
+    // so add the updater we're 'lifting' (The ctor will add a bounds updater
+    // to the end of the stack).
+    const cloned = this.cloneUpdater()
+    if (cloned) updater = cloned.add(updater)
     return new ScrollBehavior(this, updater)
   }
 
@@ -82,6 +90,21 @@ export class ScrollBehavior extends BehaviorSubject {
       x: this._value.x + nextDelta.deltaX,
       y: this._value.y + nextDelta.deltaY,
     })
+  }
+
+  startWith (value) {
+    return new ScrollBehavior(this.target, this.Delta, this.rect, this.cloneUpdater(), value)
+  }
+
+  moveTo (value, opts, scheduler) {
+    const delta = this.Delta.computeDelta(this._value, value, this.updater)
+    const target = this.target
+    const updater = anchor(opts)
+    // TODO: Switch back to original delta source when move completes?
+    const deltaSource = this.Delta.moveTo(target, delta, updater, scheduler)
+    const behavior = new ScrollBehavior(this, updater)
+    behavior.operator = new ScrollBehaviorOperator(deltaSource, this.rect)
+    return behavior
   }
 
   momentumX (opts) {
