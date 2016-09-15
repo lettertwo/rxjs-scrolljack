@@ -7,6 +7,7 @@ import {mapTo} from 'rxjs/operator/mapTo'
 import {fromHijackedEvent} from './operators/fromHijackedEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
 import {MoveOperator} from './operators/MoveOperator'
+import {AccumulationOperator} from './operators/AccumulationOperator'
 import {getRoot} from './utils'
 
 const DEFAULT_VALUE = Object.freeze({
@@ -33,6 +34,12 @@ export class Delta extends Observable {
     const observable = new this.constructor(this)
     observable.operator = operator
     return observable
+  }
+
+  accumulate (initialValue) {
+    return this.lift(
+      new AccumulationOperator(this.constructor.createValue(initialValue))
+    )
   }
 
   static createValue (opts) {
