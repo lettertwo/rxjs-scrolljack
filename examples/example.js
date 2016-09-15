@@ -142,6 +142,17 @@ function main () {
     .startWith(getScrollBounds(content, container))
 
   /**
+   * The stream of clicks, which are mapped to scroll movements.
+   * @type {Observable<Offset>}
+   */
+  const clicks = Rx.Observable
+    .fromEvent(content, 'click')
+    .map(e => ({
+      x: e.clientX,
+      y: e.clientY,
+    }))
+
+  /**
    * Create a Subject for our scroll offset updates.
    * We use a Subject so that it can both receive updates
    * from scroll behavior (`next()`) as well as
@@ -184,14 +195,21 @@ function main () {
     // We create a new ScrollBehavior whenever the bounds change.
     const scrollBehavior = new ScrollBehavior(container, Delta, bounds)
 
-    const inputs = lastOffset
-      .first()  // Start with the last offset.
+    const textInputs = lastOffset
+      .take(1)  // Start with the last offset.
       .concat(input) // Concatenate input.
-      // .concat(input.do(v => console.log('input', v))) // Concatenate input.
+
+    // Generate animated movement whenever a click occurs.
+    const clickInputs = clicks.switchMap(offset => lastOffset
+      .take(1) // Start with the last offset.
+      .mergeMap(v => scrollBehavior.startWith(v).moveTo(offset))
+    )
+
+    const inputs = Rx.Observable.merge(textInputs, clickInputs)
       .do(scrollBehavior)  // Update scrollBehavior with input.
 
     const outputs = scrollBehavior
-      .momentum()
+      .momentum()  // Perform a decceleration at the end of a scroll behavior.
       .skip(1)  // Skip the first update because it's the last offset!
       .do(updateOffset)  // Update offset with scrollBehavior output.
 
