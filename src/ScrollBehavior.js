@@ -75,12 +75,7 @@ export class ScrollBehavior extends BehaviorSubject {
   }
 
   next (value) {
-    let nextDelta = this.Delta.createValue({
-      deltaX: value.x - this._value.x,
-      deltaY: value.y - this._value.y,
-    })
-
-    nextDelta = this.bounds.computeNext(nextDelta)
+    let nextDelta = this.Delta.computeDelta(this._value, value, this.bounds)
     this.updater.updateFrame(nextDelta)
 
     return super.next({

@@ -18,6 +18,20 @@ const DEFAULT_VALUE = Object.freeze({
   velocityY: 0,
 })
 
+const calculateDeltaX = (start, end) => {
+  if ('deltaX' in end) return end.deltaX
+  start = 'x' in start ? start.x : 0
+  end = 'x' in end ? end.x : 0
+  return end - start
+}
+
+const calculateDeltaY = (start, end) => {
+  if ('deltaY' in end) return end.deltaY
+  start = 'y' in start ? start.y : 0
+  end = 'y' in end ? end.y : 0
+  return end - start
+}
+
 export class Delta extends Observable {
   constructor (target, event, ...hijackArgs) {
     if (typeof target[$$observable] === 'function') {
@@ -46,6 +60,19 @@ export class Delta extends Observable {
     opts = {...DEFAULT_VALUE, ...opts}
     const {deltaT, deltaX, deltaY, velocityX, velocityY} = opts
     return {deltaT, deltaX, deltaY, velocityX, velocityY}
+  }
+
+  static computeDelta (startValue, endValue, updater) {
+    const value = this.createValue({
+      deltaX: calculateDeltaX(startValue, endValue),
+      deltaY: calculateDeltaY(startValue, endValue),
+    })
+    if (updater) {
+      if (typeof updater === 'function') updater = updater()
+      return updater.computeNext(value)
+    } else {
+      return value
+    }
   }
 
   static create (target) {
