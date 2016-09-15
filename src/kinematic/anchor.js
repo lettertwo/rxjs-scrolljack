@@ -42,7 +42,7 @@ class AnchorUpdater extends KinematicUpdater {
       velocity = spring.velocity
     }
 
-    newDelta += droppedDelta
+    netDelta += droppedDelta
 
     // Compute the result of the current frame.
     let [nd, nv] = computeNextValue(netDelta, 0, velocity, t, K, B, P)
