@@ -56,12 +56,14 @@ export class Delta extends Observable {
     )
   }
 
+  // FIXME: This isn't an operator, so should it be here?
   static createValue (opts) {
     opts = {...DEFAULT_VALUE, ...opts}
     const {deltaT, deltaX, deltaY, velocityX, velocityY} = opts
     return {deltaT, deltaX, deltaY, velocityX, velocityY}
   }
 
+  // FIXME: This isn't an operator, so should it be here?
   static computeDelta (startValue, endValue, updater) {
     const value = this.createValue({
       deltaX: calculateDeltaX(startValue, endValue),
