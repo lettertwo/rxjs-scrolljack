@@ -128,6 +128,7 @@ function main () {
     inputX.value = offset.x  // update the x offset input field.
     inputY.value = offset.y  // update the y offset input field.
     content.style.transform = buildTransformString(offset)  // Move the content.
+    content.style.pointerEvents = scrolling ? 'none' : null  // Disable pointer events on content while scrolling.
     border.style.borderColor = scrolling ? 'lime' : 'gray'  // Green means scrolling, gray means restoring.
   }
 
