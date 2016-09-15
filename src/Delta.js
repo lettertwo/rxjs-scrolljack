@@ -8,6 +8,8 @@ import {fromHijackedEvent} from './operators/fromHijackedEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
 import {MoveOperator} from './operators/MoveOperator'
 import {AccumulationOperator} from './operators/AccumulationOperator'
+import {DeltaGeneratorOperator} from './operators/DeltaGeneratorOperator'
+import {anchor} from './kinematic/anchor'
 import {getRoot} from './utils'
 
 const DEFAULT_VALUE = Object.freeze({
@@ -92,6 +94,25 @@ export class Delta extends Observable {
     return this
       .start(target)
       .lift(new MoveOperator(nextSource, stopSource, updater, scheduler))
+      ::_switch()
+  }
+
+  static moveTo (target, endValue, updater, scheduler) {
+    if (typeof updater === 'function') updater = updater()
+    else if (!updater) updater = anchor()
+
+    // We subtract our target delta from the updater's net delta so that
+    // it ends up generating that amount of delta in the original orientation
+    // as it attempts to bring the netDelta back to 0.
+    updater.updateFrame({
+      ...endValue,
+      deltaX: -endValue.deltaX,
+      deltaY: -endValue.deltaY,
+    })
+
+    return this
+      .start(target)
+      .lift(new DeltaGeneratorOperator(this.createValue(), updater, scheduler))
       ::_switch()
   }
 
