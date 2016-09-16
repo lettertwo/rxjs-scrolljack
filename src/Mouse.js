@@ -5,12 +5,7 @@ import {mergeMap} from 'rxjs/operator/mergeMap'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {Delta} from './Delta'
 import {inside} from './utils'
-
-const MOUSE_DOWN = 'mousedown'
-const MOUSE_MOVE = 'mousemove'
-const MOUSE_UP = 'mouseup'
-const CLICK = 'click'
-
+import {MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, CLICK} from './events'
 
 export class Mouse extends Delta {
   constructor (target, event = MOUSE_MOVE) {

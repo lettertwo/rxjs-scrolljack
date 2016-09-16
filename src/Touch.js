@@ -5,11 +5,7 @@ import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {Delta} from './Delta'
 import {inside} from './utils'
-
-const TOUCH_START = 'touchstart'
-const TOUCH_MOVE = 'touchmove'
-const TOUCH_END = 'touchend'
-const TOUCH_CANCEL = 'touchcancel'
+import {TOUCH_START, TOUCH_MOVE, TOUCH_END, TOUCH_CANCEL} from './events'
 
 const excludeMultiTouch = e => e.touches.length <= 1
 

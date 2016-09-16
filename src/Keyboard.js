@@ -3,10 +3,8 @@ import {Observable} from 'rxjs/Observable'
 import {takeUntil} from 'rxjs/operator/takeUntil'
 import {fromHijackableEvent} from './operators/fromHijackableEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
+import {KEY_START, KEY_MOVE, KEY_STOP} from './events'
 
-const KEY_START = 'keydown'
-const KEY_MOVE = 'keydown'
-const KEY_STOP = 'keyup'
 const KEY_CODES = [
   32,  // spacebar
   33,  // pageup

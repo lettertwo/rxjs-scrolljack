@@ -7,11 +7,8 @@ import {multicast} from 'rxjs/operator/multicast'
 import {filter} from 'rxjs/operator/filter'
 import {async} from 'rxjs/scheduler/async'
 import {timeStamp, createWheelEventFrom} from '../utils'
+import {WHEEL, WHEEL_START, WHEEL_MOVE, WHEEL_END} from '../events'
 
-const WHEEL = 'wheel'
-const WHEEL_START = 'wheelstart'
-const WHEEL_MOVE = 'wheelmove'
-const WHEEL_END = 'wheelend'
 const SCROLL_STOP_DELAY = 60
 
 const dispatchStop = subscriber => { subscriber.stopNow() }

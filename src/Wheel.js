@@ -2,10 +2,7 @@ import $$observable from 'symbol-observable'
 import {Delta} from './Delta'
 import {DeltaOperator} from './operators/DeltaOperator'
 import {fromEmulatedWheelEvent} from './operators/fromEmulatedWheelEvent'
-
-const WHEEL_START = 'wheelstart'
-const WHEEL_MOVE = 'wheelmove'
-const WHEEL_END = 'wheelend'
+import {WHEEL_START, WHEEL_MOVE, WHEEL_END} from './events'
 
 export class Wheel extends Delta {
   constructor (target, event = WHEEL_MOVE) {
