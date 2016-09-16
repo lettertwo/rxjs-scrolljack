@@ -69,8 +69,6 @@ export class DeltaSubscriber extends Subscriber {
       }
     }
 
-    if (typeof deltaX !== 'number') debugger
-
     return {deltaX, deltaY}
   }
 
