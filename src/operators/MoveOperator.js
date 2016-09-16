@@ -48,6 +48,9 @@ export class MoveSubscriber extends Subscriber {
     // Start with next and stop sources for our move operation.
     let {nextSource, stopSource} = this
 
+    nextSource = nextSource.hijack()
+    stopSource = stopSource.hijack()
+
     // If we don't have an updater, skip to the end.
     if (!this.updater) {
       return merge(

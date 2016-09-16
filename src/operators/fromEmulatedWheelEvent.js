@@ -2,12 +2,11 @@ import $$observable from 'symbol-observable'
 import {Subscriber} from 'rxjs/Subscriber'
 import {Observable} from 'rxjs/Observable'
 import {Subject} from 'rxjs/Subject'
-import {fromEvent} from 'rxjs/observable/fromEvent'
+import {fromHijackableEvent} from './fromHijackableEvent'
 import {multicast} from 'rxjs/operator/multicast'
-import {_do as tap} from 'rxjs/operator/do'
 import {filter} from 'rxjs/operator/filter'
 import {async} from 'rxjs/scheduler/async'
-import {preventDefault, timeStamp, createWheelEventFrom} from '../utils'
+import {timeStamp, createWheelEventFrom} from '../utils'
 
 const WHEEL = 'wheel'
 const WHEEL_START = 'wheelstart'
@@ -21,8 +20,8 @@ const wheelTargets = new WeakMap()
 
 const getEventSource = target => {
   if (!wheelTargets.has(target)) {
-    wheelTargets.set(target, fromEvent(target, WHEEL)
-      ::tap(preventDefault)
+    wheelTargets.set(target, fromHijackableEvent(target, WHEEL)
+      .hijack()
       .lift(new WheelEventEmulatorOperator())
         ::multicast(new Subject())
         .refCount()

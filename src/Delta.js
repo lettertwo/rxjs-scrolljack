@@ -4,10 +4,11 @@ import {takeUntil} from 'rxjs/operator/takeUntil'
 import {_switch} from 'rxjs/operator/switch'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {mapTo} from 'rxjs/operator/mapTo'
-import {fromHijackedEvent} from './operators/fromHijackedEvent'
+import {fromHijackableEvent} from './operators/fromHijackableEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
 import {MoveOperator} from './operators/MoveOperator'
 import {AccumulationOperator} from './operators/AccumulationOperator'
+import {HijackOperator} from './operators/HijackOperator'
 import {DeltaGeneratorOperator} from './operators/DeltaGeneratorOperator'
 import {anchor} from './kinematic/anchor'
 import {getRoot} from './utils'
@@ -41,7 +42,7 @@ export class Delta extends Observable {
       this.source = target[$$observable]()
     } else {
       super()
-      this.source = fromHijackedEvent(target, event, ...hijackArgs)
+      this.source = fromHijackableEvent(target, event, ...hijackArgs)
       this.source.operator = new DeltaOperator()
     }
   }
@@ -56,6 +57,10 @@ export class Delta extends Observable {
     return this.lift(
       new AccumulationOperator(this.constructor.createValue(initialValue))
     )
+  }
+
+  hijack (predicate) {
+    return this.lift(new HijackOperator(predicate))
   }
 
   // FIXME: This isn't an operator, so should it be here?

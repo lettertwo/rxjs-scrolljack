@@ -20,8 +20,10 @@ export class Mouse extends Delta {
   static start (target, radius = {w: 10, h: 10}) {
     return super
       .start(target, MOUSE_DOWN)
+      .hijack()
       ::mergeMap(offset => super
         .create(target)
+        .hijack()
         .accumulate()
         ::takeUntil(this.stop(target))
         ::skipWhile(netValue => inside(radius.w, radius.h, netValue.deltaX, netValue.deltaY))

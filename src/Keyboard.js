@@ -1,7 +1,7 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
 import {takeUntil} from 'rxjs/operator/takeUntil'
-import {fromHijackedEvent} from './operators/fromHijackedEvent'
+import {fromHijackableEvent} from './operators/fromHijackableEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
 
 const KEY_START = 'keydown'
@@ -50,7 +50,7 @@ export class Keyboard extends Observable {
       this.source = target[$$observable]()
     } else {
       super()
-      this.source = fromHijackedEvent(target, event, includeUnmodifiedKeys(...KEY_CODES))
+      this.source = fromHijackableEvent(target, event, includeUnmodifiedKeys(...KEY_CODES))
       this.source.operator = new DeltaOperator(keyCodeToScrollDelta)
     }
   }

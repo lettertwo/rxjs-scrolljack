@@ -1,11 +1,10 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
 import {fromEvent} from 'rxjs/observable/fromEvent'
-import {_do as tap} from 'rxjs/operator/do'
 import {filter} from 'rxjs/operator/filter'
-import {preventDefault} from '../utils'
+import {HijackOperator} from './HijackOperator'
 
-class FromHijackedEventObserverable extends Observable {
+class FromHijackableEventObserverable extends Observable {
   constructor (target, event, predicate, ...args) {
     if (typeof target[$$observable] === 'function') {
       super()
@@ -16,19 +15,22 @@ class FromHijackedEventObserverable extends Observable {
       if (predicate) {
         this.source = this.source::filter(predicate)
       }
-      this.source = this.source::tap(preventDefault)
     }
   }
 
   lift (operator) {
-    const observable = new FromHijackedEventObserverable(this)
+    const observable = new FromHijackableEventObserverable(this)
     observable.operator = operator
     return observable
   }
 
   static create (...args) {
-    return new FromHijackedEventObserverable(...args)
+    return new FromHijackableEventObserverable(...args)
+  }
+
+  hijack (predicate) {
+    return this.lift(new HijackOperator(predicate))
   }
 }
 
-export const fromHijackedEvent = FromHijackedEventObserverable.create
+export const fromHijackableEvent = FromHijackableEventObserverable.create
