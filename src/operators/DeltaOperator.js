@@ -6,31 +6,33 @@ export class DeltaSubscriber extends Subscriber {
     super(destination)
     this.computeDelta = computeDelta || DeltaSubscriber._computeDelta
     this.computeVelocity = computeVelocity || DeltaSubscriber._computeVelocity
-    this._lastValue = null
+    this._lastEvent = null
     this._lastTime = null
   }
 
-  static _computeVelocity (value, lastValue, deltaT) {
-    let {velocityX, velocityY, deltaX, deltaY} = value
+  static _computeVelocity (event, lastEvent, deltaT) {
+    if (!deltaT) return {velocityX: 0, velocityY: 0}
+
+    let {velocityX, velocityY, deltaX, deltaY} = event
     let t = deltaT / 1000
 
-    if (value.type && value.type.startsWith('touch')) {
-      if (!lastValue || !lastValue.touches || !lastValue.touches.length) {
+    if (event.type && event.type.startsWith('touch')) {
+      if (!lastEvent || !lastEvent.touches || !lastEvent.touches.length) {
         velocityX = 0
         velocityY = 0
       } else {
-        const {clientX: prevX, clientY: prevY} = lastValue.touches[0]
-        const {clientX, clientY} = value.touches[0]
+        const {clientX: prevX, clientY: prevY} = lastEvent.touches[0]
+        const {clientX, clientY} = event.touches[0]
         velocityX = (prevX - clientX) / t
         velocityY = (prevY - clientY) / t
       }
-    } else if (value.type && value.type.startsWith('mouse')) {
-      if (!lastValue) {
+    } else if (event.type && event.type.startsWith('mouse')) {
+      if (!lastEvent) {
         velocityX = 0
         velocityY = 0
       } else {
-        const {clientX: prevX, clientY: prevY} = lastValue
-        const {clientX, clientY} = value
+        const {clientX: prevX, clientY: prevY} = lastEvent
+        const {clientX, clientY} = event
         velocityX = (prevX - clientX) / t
         velocityY = (prevY - clientY) / t
       }
@@ -42,49 +44,51 @@ export class DeltaSubscriber extends Subscriber {
     return {velocityX, velocityY}
   }
 
-  static _computeDelta (value, lastValue) {
-    let {deltaX, deltaY} = value
+  static _computeDelta (event, lastEvent) {
+    let {deltaX, deltaY} = event
 
-    if (value.type && value.type.startsWith('touch')) {
-      if (!lastValue || !lastValue.touches || !lastValue.touches.length) {
+    if (event.type && event.type.startsWith('touch')) {
+      if (!lastEvent || !lastEvent.touches || !lastEvent.touches.length) {
         deltaX = 0
         deltaY = 0
       } else {
-        const {clientX: prevX, clientY: prevY} = lastValue.touches[0]
-        const {clientX, clientY} = value.touches[0]
+        const {clientX: prevX, clientY: prevY} = lastEvent.touches[0]
+        const {clientX, clientY} = event.touches[0]
         deltaX = prevX - clientX
         deltaY = prevY - clientY
       }
-    } else if (value.type && value.type.startsWith('mouse')) {
-      if (!lastValue) {
+    } else if (event.type && event.type.startsWith('mouse')) {
+      if (!lastEvent) {
         deltaX = 0
         deltaY = 0
       } else {
-        const {clientX: prevX, clientY: prevY} = lastValue
-        const {clientX, clientY} = value
+        const {clientX: prevX, clientY: prevY} = lastEvent
+        const {clientX, clientY} = event
         deltaX = prevX - clientX
         deltaY = prevY - clientY
       }
     }
 
+    if (typeof deltaX !== 'number') debugger
+
     return {deltaX, deltaY}
   }
 
-  _next (value) {
-    const {_lastValue: lastValue, _lastTime: lastTime} = this
-    const time = timeStamp(value)
+  _next (event) {
+    const {_lastEvent: lastEvent, _lastTime: lastTime} = this
+    const time = timeStamp(event)
     const deltaT = lastTime ? time - lastTime : 0
-    const delta = this.computeDelta(value, lastValue, deltaT)
-    const velocity = this.computeVelocity(value, lastValue, deltaT)
+    const delta = this.computeDelta(event, lastEvent, deltaT)
+    const velocity = this.computeVelocity(event, lastEvent, deltaT)
 
-    this._lastValue = value
+    this._lastEvent = event
     this._lastTime = time
 
-    super._next({...delta, ...velocity, deltaT})
+    super._next({...delta, ...velocity, deltaT, event})
   }
 
   _complete () {
-    this._lastValue = null
+    this._lastEvent = null
     this._lastTime = null
     super._complete()
   }
