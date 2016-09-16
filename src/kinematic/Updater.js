@@ -19,14 +19,18 @@ export class Updater {
 
   start (value) {
     this.stopped = false
+    value = this.computeNext(value)
     this._start(value)
-    return this.computeNext(value)
+    this.updateFrame(value)
+    return value
   }
 
   stop (value) {
     this.stopped = true
+    value = this.computeNext(value)
     this._stop(value)
-    return this.computeNext(value)
+    this.updateFrame(value)
+    return value
   }
 
   computeNext (value) {
