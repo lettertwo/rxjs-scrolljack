@@ -1,6 +1,7 @@
 import {skipWhile} from 'rxjs/operator/skipWhile'
 import {takeUntil} from 'rxjs/operator/takeUntil'
 import {take} from 'rxjs/operator/take'
+import {mergeMap} from 'rxjs/operator/mergeMap'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {Delta} from './Delta'
 import {inside} from './utils'
@@ -19,7 +20,7 @@ export class Mouse extends Delta {
   static start (target, radius = {w: 10, h: 10}) {
     return super
       .start(target, MOUSE_DOWN)
-      .switchMap(offset => super
+      ::mergeMap(offset => super
         .create(target)
         .accumulate()
         ::takeUntil(this.stop(target))
