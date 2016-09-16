@@ -1,5 +1,6 @@
 import {Subscriber} from 'rxjs/Subscriber'
 import {timeStamp} from '../utils'
+import {touchEvents, mouseEvents} from '../events'
 
 export class DeltaSubscriber extends Subscriber {
   constructor (destination, computeDelta, computeVelocity) {
@@ -16,7 +17,7 @@ export class DeltaSubscriber extends Subscriber {
     let {velocityX, velocityY, deltaX, deltaY} = event
     let t = deltaT / 1000
 
-    if (event.type && event.type.startsWith('touch')) {
+    if (event.type && touchEvents.includes(event.type)) {
       if (!lastEvent || !lastEvent.touches || !lastEvent.touches.length) {
         velocityX = 0
         velocityY = 0
@@ -26,7 +27,7 @@ export class DeltaSubscriber extends Subscriber {
         velocityX = (prevX - clientX) / t
         velocityY = (prevY - clientY) / t
       }
-    } else if (event.type && event.type.startsWith('mouse')) {
+    } else if (event.type && mouseEvents.includes(event.type)) {
       if (!lastEvent) {
         velocityX = 0
         velocityY = 0
@@ -47,7 +48,7 @@ export class DeltaSubscriber extends Subscriber {
   static _computeDelta (event, lastEvent) {
     let {deltaX, deltaY} = event
 
-    if (event.type && event.type.startsWith('touch')) {
+    if (event.type && touchEvents.includes(event.type)) {
       if (!lastEvent || !lastEvent.touches || !lastEvent.touches.length) {
         deltaX = 0
         deltaY = 0
@@ -57,7 +58,7 @@ export class DeltaSubscriber extends Subscriber {
         deltaX = prevX - clientX
         deltaY = prevY - clientY
       }
-    } else if (event.type && event.type.startsWith('mouse')) {
+    } else if (event.type && mouseEvents.includes(event.type)) {
       if (!lastEvent) {
         deltaX = 0
         deltaY = 0
