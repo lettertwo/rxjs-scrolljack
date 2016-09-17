@@ -6,7 +6,8 @@ import {anchor} from './kinematic/anchor'
 import {bounds} from './kinematic/bounds'
 
 export class ScrollBehavior extends BehaviorSubject {
-  constructor (target, DeltaOrUpdater, rect, updater, initialValue) {
+  constructor (target, DeltaOrDeltaOperator, rectOrUpdater, updater, initialValue) {
+    let deltaOperator
     if (target instanceof ScrollBehavior) {
       super()
       this.source = target
@@ -14,12 +15,14 @@ export class ScrollBehavior extends BehaviorSubject {
       this.Delta = target.Delta
       this.rect = {...target.rect}
       this._value = {...target._value}
-      updater = DeltaOrUpdater
+      updater = rectOrUpdater
+      deltaOperator = DeltaOrDeltaOperator
     } else {
       super()
       this.target = target
-      this.Delta = DeltaOrUpdater
-      this.rect = {...rect}
+      this.Delta = DeltaOrDeltaOperator
+      this.rect = {...rectOrUpdater}
+      deltaOperator = (...args) => this.Delta.move(...args)
 
       const {x = 0, y = 0} = this.rect
       this._value = {x, y, ...initialValue}
@@ -49,7 +52,7 @@ export class ScrollBehavior extends BehaviorSubject {
       this.updater = this.bounds
     }
 
-    const deltaSource = this.Delta.move(this.target, this.updater)
+    const deltaSource = deltaOperator(this.target, this.updater)
     this.operator = new ScrollBehaviorOperator(deltaSource, this._value)
   }
 
@@ -61,6 +64,16 @@ export class ScrollBehavior extends BehaviorSubject {
     }
 
     return subscription
+  }
+
+  next (value) {
+    let nextDelta = this.Delta.computeDelta(this._value, value, this.bounds)
+    this.updater.updateFrame(nextDelta)
+
+    return super.next({
+      x: this._value.x + nextDelta.deltaX,
+      y: this._value.y + nextDelta.deltaY,
+    })
   }
 
   cloneUpdater () {
@@ -79,32 +92,22 @@ export class ScrollBehavior extends BehaviorSubject {
     // to the end of the stack).
     const cloned = this.cloneUpdater()
     if (cloned) updater = cloned.add(updater)
-    return new ScrollBehavior(this, updater)
-  }
-
-  next (value) {
-    let nextDelta = this.Delta.computeDelta(this._value, value, this.bounds)
-    this.updater.updateFrame(nextDelta)
-
-    return super.next({
-      x: this._value.x + nextDelta.deltaX,
-      y: this._value.y + nextDelta.deltaY,
-    })
+    const deltaOperator = (...args) => this.Delta.move(...args)
+    return new ScrollBehavior(this, deltaOperator, updater)
   }
 
   startWith (value) {
-    return new ScrollBehavior(this.target, this.Delta, this.rect, this.cloneUpdater(), value)
+    const updater = this.cloneUpdater()
+    const {target, Delta, rect} = this
+    return new ScrollBehavior(target, Delta, rect, updater, value)
   }
 
   moveTo (value, opts, scheduler) {
     const delta = this.Delta.computeDelta(this._value, value, this.updater)
-    const target = this.target
     const updater = anchor(opts)
-    // TODO: Switch back to original delta source when move completes?
-    const deltaSource = this.Delta.moveTo(target, delta, updater, scheduler)
-    const behavior = new ScrollBehavior(this, updater)
-    behavior.operator = new ScrollBehaviorOperator(deltaSource, this.rect)
-    return behavior
+    const deltaOperator = target =>
+      this.Delta.moveTo(target, delta, updater, scheduler)
+    return new ScrollBehavior(this, deltaOperator, updater)
   }
 
   momentumX (opts) {
