@@ -1,7 +1,9 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
 import {_switch} from 'rxjs/operator/switch'
+import {exhaust} from 'rxjs/operator/exhaust'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
+import {take} from 'rxjs/operator/take'
 import {mapTo} from 'rxjs/operator/mapTo'
 import {fromHijackableEvent} from './operators/fromHijackableEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
@@ -87,21 +89,56 @@ export class Delta extends Observable {
     return new this(target)
   }
 
+  static start (target, event, value) {
+    return new this(target, event)::mapTo(this.createValue(value))
+  }
+
+  static stop (target, event, value) {
+    return new this(target, event)::mapTo(this.createValue(value))
   }
 
   static move (target, updater, scheduler, root = getRoot()) {
-    if (typeof updater === 'function') updater = updater()
-    const nextSource = this.create(root)
-    const stopSource = this.stop(root)
     return this
       .start(target)
-      .lift(new MoveOperator(nextSource, stopSource, updater, scheduler))
+      ._liftMoveOperator(root, updater, scheduler)
       ::_switch()
   }
 
+  static moveOnce (target, updater, scheduler, root = getRoot()) {
+    return this
+      .start(target)
+      ::take(1)
+      ._liftMoveOperator(root, updater, scheduler)
+      ::exhaust()
+  }
+
   static moveTo (target, endValue, updater, scheduler) {
+    return this
+      .start(target)
+      ._liftDeltaGeneratorOperator(endValue, updater, scheduler)
+      ::_switch()
+  }
+
+  static moveToOnce (target, endValue, updater, scheduler) {
+    return this
+      .start(target)
+      ::take(1)
+      ._liftDeltaGeneratorOperator(endValue, updater, scheduler)
+      ::exhaust()
+  }
+
+  _liftMoveOperator (root, updater, scheduler) {
+    const nextSource = this.constructor.create(root)
+    const stopSource = this.constructor.stop(root)
+    if (typeof updater === 'function') updater = updater()
+    return this.lift(new MoveOperator(nextSource, stopSource, updater, scheduler))
+  }
+
+  _liftDeltaGeneratorOperator (endValue, updater, scheduler) {
     if (typeof updater === 'function') updater = updater()
     else if (!updater) updater = anchor()
+
+    const startValue = this.constructor.createValue()
 
     // We subtract our target delta from the updater's net delta so that
     // it ends up generating that amount of delta in the original orientation
@@ -112,16 +149,7 @@ export class Delta extends Observable {
       deltaY: -endValue.deltaY,
     })
 
-    return this
-      .start(target)
-      .lift(new DeltaGeneratorOperator(this.createValue(), updater, scheduler))
-      ::_switch()
-  static start (target, event, value) {
-    return new this(target, event)::mapTo(this.createValue(value))
-  }
-
-  static stop (target, event, value) {
-    return new this(target, event)::mapTo(this.createValue(value))
+    return this.lift(new DeltaGeneratorOperator(startValue, updater, scheduler))
   }
 }
 
