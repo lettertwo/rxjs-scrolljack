@@ -1,6 +1,5 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
-import {takeUntil} from 'rxjs/operator/takeUntil'
 import {_switch} from 'rxjs/operator/switch'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {mapTo} from 'rxjs/operator/mapTo'
@@ -88,8 +87,6 @@ export class Delta extends Observable {
     return new this(target)
   }
 
-  static from (target) {
-    return new this(target)::takeUntil(this.stop(target))
   }
 
   static move (target, updater, scheduler, root = getRoot()) {
@@ -119,8 +116,6 @@ export class Delta extends Observable {
       .start(target)
       .lift(new DeltaGeneratorOperator(this.createValue(), updater, scheduler))
       ::_switch()
-  }
-
   static start (target, event, value) {
     return new this(target, event)::mapTo(this.createValue(value))
   }
