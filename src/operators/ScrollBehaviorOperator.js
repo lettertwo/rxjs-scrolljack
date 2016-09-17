@@ -4,8 +4,9 @@ export class ScrollBehaviorSubscriber extends Subscriber {
   constructor (destination, behavior, initialValue = {x: 0, y: 0}) {
     super(destination)
     this.behavior = behavior
-    this.add(behavior._subscribe(new Subscriber(this.withLatestFromSubject)))
     this.latestFromSubject = {...initialValue}
+    this._behaviorSub = behavior._subscribe(new Subscriber(this.withLatestFromSubject))
+    this.add(this._behaviorSub)
   }
 
   withLatestFromSubject = latestFromSubject => {
@@ -31,12 +32,11 @@ export class ScrollBehaviorSubscriber extends Subscriber {
   }
 
   _complete () {
-    this.minX = null
-    this.maxX = null
-    this.minY = null
-    this.maxY = null
-    this.behavior = null
-    this.latestFromSubject = null
+    super._complete()
+    this.behavior.complete()
+    this.remove(this._behaviorSub)
+    this._behaviorSub.unsubscribe()
+    this._behaviorSub = null
   }
 }
 
