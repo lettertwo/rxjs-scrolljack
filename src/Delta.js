@@ -154,6 +154,8 @@ export class Delta extends Observable {
 }
 
 export const combineDeltas = (...DeltaClasses) => {
+  // FIXME: Releasing outside doesn't work! We need a way to specify
+  // roots to create and stop that are different from target!
   class MultiDelta extends Delta {
     constructor (target) {
       if (typeof target[$$observable] === 'function') {
@@ -169,19 +171,6 @@ export const combineDeltas = (...DeltaClasses) => {
       return this.create(merge(...DeltaClasses.map(DeltaClass => (
         DeltaClass.start(target)
       ))))
-    }
-
-    static move (target, updater, scheduler) {
-      if (typeof updater === 'function') updater = updater()
-    // FIXME: Releasing outside doesn't work! We need a way to specify
-    // roots to create and stop that are different from target
-    // (and specific to each wrapped Delta class).
-      const nextSource = this.create(target)
-      const stopSource = this.stop(target)
-      return this
-        .start(target)
-        .lift(new MoveOperator(nextSource, stopSource, updater, scheduler))
-        ::_switch()
     }
 
     static stop (target) {
