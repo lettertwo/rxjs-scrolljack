@@ -87,16 +87,6 @@ export class ScrollBehavior extends BehaviorSubject {
     }
   }
 
-  liftUpdater (updater) {
-    // Clone our updater, if we have one. If we do, it's an updater stack,
-    // so add the updater we're 'lifting' (The ctor will add a bounds updater
-    // to the end of the stack).
-    const cloned = this._cloneUpdater()
-    if (cloned) updater = cloned.add(updater)
-    const deltaOperator = (...args) => this.Delta.move(...args)
-    return new ScrollBehavior(this, deltaOperator, updater)
-  }
-
   startWith (value) {
     const updater = this._cloneUpdater()
     const {target, Delta, rect} = this
@@ -121,28 +111,12 @@ export class ScrollBehavior extends BehaviorSubject {
     return new ScrollBehavior(this, deltaOperator, updater)
   }
 
-  momentumX (opts) {
-    return this.liftUpdater(momentum.x(opts))
-  }
-
-  momentumY (opts) {
-    return this.liftUpdater(momentum.y(opts))
-  }
-
   momentum (opts) {
-    return this.liftUpdater(momentum(opts))
-  }
-
-  anchorX (opts) {
-    return this.liftUpdater(anchor.x(opts))
-  }
-
-  anchorY (opts) {
-    return this.liftUpdater(anchor.y(opts))
-  }
-
-  anchor (opts) {
-    return this.liftUpdater(anchor(opts))
+    const cloned = this._cloneUpdater()
+    let updater = momentum(opts)
+    if (cloned) updater = cloned.add(updater)
+    const deltaOperator = (...args) => this.Delta.move(...args)
+    return new ScrollBehavior(this, deltaOperator, updater)
   }
 }
 
