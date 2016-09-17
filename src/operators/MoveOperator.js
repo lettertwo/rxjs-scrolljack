@@ -28,6 +28,7 @@ export class MoveSubscriber extends Subscriber {
     this.stopSource = stopSource
     this.updater = updater
     this.scheduler = scheduler
+    this._currentMove = null
   }
 
   start = value => this.updater.start(value)
@@ -53,43 +54,52 @@ export class MoveSubscriber extends Subscriber {
 
     // If we don't have an updater, skip to the end.
     if (!this.updater) {
-      return merge(
-        nextSource::takeUntil(stopSource)::startWith(starts),
-        stopSource::first(),
-      )
-    }
-
-    // If we're extended to compute next values,
-    // map next to the update method.
-    if (typeof this.updater.computeNext === 'function') {
-      nextSource = nextSource::map(this.computeNext)
-    }
-
-    // If we're extended to compute stop values,
-    // map stop to the update method.
-    if (typeof this.updater.stop === 'function') {
-      nextSource = nextSource::takeUntil(stopSource::map(this.stop))
+      nextSource = nextSource::takeUntil(stopSource)::startWith(starts)
+      stopSource = stopSource::first()
     } else {
-      nextSource = nextSource::takeUntil(stopSource)
-    }
+      // If we're extended to compute next values,
+      // map next to the update method.
+      if (typeof this.updater.computeNext === 'function') {
+        nextSource = nextSource::map(this.computeNext)
+      }
 
-    if (typeof this.updater.start === 'function') {
-    // Start with the value that triggered this operation.
-      nextSource = nextSource::startWith(this.start(starts))
-    } else {
+      // If we're extended to compute stop values,
+      // map stop to the update method.
+      if (typeof this.updater.stop === 'function') {
+        nextSource = nextSource::takeUntil(stopSource::map(this.stop))
+      } else {
+        nextSource = nextSource::takeUntil(stopSource)
+      }
+
+      if (typeof this.updater.start === 'function') {
       // Start with the value that triggered this operation.
-      nextSource = nextSource::startWith(starts)
-    }
+        nextSource = nextSource::startWith(this.start(starts))
+      } else {
+        // Start with the value that triggered this operation.
+        nextSource = nextSource::startWith(starts)
+      }
 
-    // If we're extended to generate additional next values,
-    // concatenate additional next values after we stop.
-    stopSource = stopSource::first()::mergeMap(this.createNextSource)
+      // If we're extended to generate additional next values,
+      // concatenate additional next values after we stop.
+      stopSource = stopSource::first()::mergeMap(this.createNextSource)
+    }
 
     // Emit the observable of the move operation.
     // The observerable emits values from the start source until
     // our stop source emits, then emits values from the stop source
     // until it completes.
-    super._next(merge(nextSource, stopSource))
+    this._currentMove = merge(nextSource, stopSource)
+    return super._next(this._currentMove)
+  }
+
+  _complete () {
+    if (this._currentMove && !this._currentMove.isClosed) {
+      this.add(this._currentMove.subscribe({
+        complete: () => { super._complete() },
+      }))
+    } else {
+      super._complete()
+    }
   }
 }
 
