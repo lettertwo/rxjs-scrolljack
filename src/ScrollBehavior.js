@@ -76,7 +76,7 @@ export class ScrollBehavior extends BehaviorSubject {
     })
   }
 
-  cloneUpdater () {
+  _cloneUpdater () {
     if (this.updater instanceof UpdaterStack && this.updater.size > 1) {
       // If this.updater is an updater stack, clone it, slicing off the
       // current bounds updater (always last in the stack).
@@ -90,14 +90,14 @@ export class ScrollBehavior extends BehaviorSubject {
     // Clone our updater, if we have one. If we do, it's an updater stack,
     // so add the updater we're 'lifting' (The ctor will add a bounds updater
     // to the end of the stack).
-    const cloned = this.cloneUpdater()
+    const cloned = this._cloneUpdater()
     if (cloned) updater = cloned.add(updater)
     const deltaOperator = (...args) => this.Delta.move(...args)
     return new ScrollBehavior(this, deltaOperator, updater)
   }
 
   startWith (value) {
-    const updater = this.cloneUpdater()
+    const updater = this._cloneUpdater()
     const {target, Delta, rect} = this
     return new ScrollBehavior(target, Delta, rect, updater, value)
   }
