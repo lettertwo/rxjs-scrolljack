@@ -1,4 +1,5 @@
 import {BehaviorSubject} from 'rxjs/BehaviorSubject'
+import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {ScrollBehaviorOperator} from './operators/ScrollBehaviorOperator'
 import {UpdaterStack} from './kinematic/UpdaterStack'
 import {momentum} from './kinematic/momentum'
@@ -107,6 +108,16 @@ export class ScrollBehavior extends BehaviorSubject {
     const updater = anchor(opts)
     const deltaOperator = target =>
       this.Delta.moveTo(target, delta, updater, scheduler)
+    return new ScrollBehavior(this, deltaOperator, updater)
+  }
+
+  anchorTo (value, opts, scheduler) {
+    const delta = this.Delta.computeDelta(this._value, value, this.updater)
+    const updater = anchor(opts)
+    const deltaOperator = target => merge(
+      this.Delta.moveToOnce(target, delta, updater, scheduler),
+      this.Delta.move(target, updater, scheduler),
+    )
     return new ScrollBehavior(this, deltaOperator, updater)
   }
 
