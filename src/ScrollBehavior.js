@@ -50,7 +50,7 @@ export class ScrollBehavior extends BehaviorSubject {
     }
 
     const deltaSource = this.Delta.move(this.target, this.updater)
-    this.operator = new ScrollBehaviorOperator(deltaSource, this.rect)
+    this.operator = new ScrollBehaviorOperator(deltaSource, this._value)
   }
 
   _subscribe (subscriber) {

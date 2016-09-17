@@ -1,11 +1,11 @@
 import {Subscriber} from 'rxjs/Subscriber'
 
 export class ScrollBehaviorSubscriber extends Subscriber {
-  constructor (destination, behavior, dimensions) {
+  constructor (destination, behavior, initialValue = {x: 0, y: 0}) {
     super(destination)
     this.behavior = behavior
-    this.latestFromSubject = {x: dimensions.x || 0, y: dimensions.y || 0}
     this.add(behavior._subscribe(new Subscriber(this.withLatestFromSubject)))
+    this.latestFromSubject = {...initialValue}
   }
 
   withLatestFromSubject = latestFromSubject => {
@@ -41,14 +41,14 @@ export class ScrollBehaviorSubscriber extends Subscriber {
 }
 
 export class ScrollBehaviorOperator {
-  constructor (deltaSource, rect) {
+  constructor (deltaSource, initialValue) {
     this.deltaSource = deltaSource
-    this.rect = rect
+    this.initialValue = initialValue
   }
 
   call (subscriber, behavior) {
     return this.deltaSource.subscribe(
-      new ScrollBehaviorSubscriber(subscriber, behavior, this.rect)
+      new ScrollBehaviorSubscriber(subscriber, behavior, this.initialValue)
     )
   }
 }
