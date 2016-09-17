@@ -67,7 +67,7 @@ export class ScrollBehavior extends BehaviorSubject {
     if (this.updater instanceof UpdaterStack && this.updater.size > 1) {
       // If this.updater is an updater stack, clone it, slicing off the
       // current bounds updater (always last in the stack).
-      return this.updater.slice(-1)
+      return this.updater.slice(0, -1)
     } else {
       return null
     }
