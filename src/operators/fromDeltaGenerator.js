@@ -22,6 +22,9 @@ export function * createDeltaGenerator (scheduler, updater, lastValue, time) {
     let now = scheduler.now()
     let deltaT = now - time
 
+    // If it's too soon to update, drop an update.
+    if (deltaT < 1) continue
+
     // If it seems like we've dropped a lot of frames, its probably because
     // this process was backgrounded (switched tabs), so we should restart.
     if (deltaT > F * 10) {
@@ -34,27 +37,38 @@ export function * createDeltaGenerator (scheduler, updater, lastValue, time) {
     // optimizations, or other delays introduced by the user/browser/runtime.
     let droppedFrames = Math.floor(deltaT / F)
 
-    let newValue = {deltaX, deltaY, deltaT}
-
     if (droppedFrames) {
       let droppedValue = {
         deltaX: deltaX / (droppedFrames + 1),
         deltaY: deltaY / (droppedFrames + 1),
         deltaT: F,
       }
-      // Subtract dropped frames' deltas from the original deltas
-      // to get the deltas for just the latest frame.
-      deltaX = deltaX - droppedValue.deltaX * droppedFrames
-      deltaY = deltaY - droppedValue.deltaY * droppedFrames
+      droppedValue.velocityX = deltaX / deltaT
+      droppedValue.velocityY = deltaY / deltaT
+
+      // Subtract dropped frames' time deltas from the original time delta
+      // to get the time deltas for just the latest frame.
       deltaT = deltaT - droppedValue.deltaT * droppedFrames
 
       // Apply the dropped frame deltas to the destination.
       for (let i = 0; i < droppedFrames; i++) {
         droppedValue = updater.computeNext(droppedValue)
         updater.catchFrame(droppedValue)
+        // Subtract dropped frames' deltas from the original deltas
+        // to get the deltas for just the latest frame. We do this in the loop
+        // instead of outside of it because the updater may adjust the values
+        // on each iteration.
+        deltaX -= droppedValue.deltaX
+        deltaY -= droppedValue.deltaY
       }
+    }
 
-      newValue = droppedValue
+    let newValue = {
+      deltaX,
+      deltaY,
+      deltaT,
+      velocityX: deltaX / deltaT,
+      velocityY: deltaY / deltaT,
     }
 
     time = now
