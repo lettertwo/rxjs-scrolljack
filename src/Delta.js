@@ -1,18 +1,16 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
-import {_switch} from 'rxjs/operator/switch'
-import {exhaust} from 'rxjs/operator/exhaust'
+import {animationFrame} from 'rxjs/scheduler/animationFrame'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
-import {take} from 'rxjs/operator/take'
+import {takeUntil} from 'rxjs/operator/takeUntil'
 import {mapTo} from 'rxjs/operator/mapTo'
+import {fromDeltaGenerator} from './operators/fromDeltaGenerator'
 import {fromHijackableEvent} from './operators/fromHijackableEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
 import {MoveOperator} from './operators/MoveOperator'
 import {AccumulationOperator} from './operators/AccumulationOperator'
 import {HijackOperator} from './operators/HijackOperator'
-import {DeltaGeneratorOperator} from './operators/DeltaGeneratorOperator'
 import {anchor} from './kinematic/anchor'
-import {getRoot} from './utils'
 
 const DEFAULT_VALUE = Object.freeze({
   deltaT: 0,
@@ -38,7 +36,9 @@ const calculateDeltaY = (start, end) => {
 
 export class Delta extends Observable {
   constructor (target, event, ...hijackArgs) {
-    if (typeof target[$$observable] === 'function') {
+    if (!target) {
+      super()
+    } else if (typeof target[$$observable] === 'function') {
       super()
       this.source = target[$$observable]()
     } else {
@@ -62,6 +62,15 @@ export class Delta extends Observable {
 
   hijack (predicate) {
     return this.lift(new HijackOperator(predicate))
+  }
+
+  move (root, updater, scheduler) {
+    if (typeof updater === 'function') updater = updater()
+
+    const nextSource = this.constructor.create(root)
+    const stopSource = this.constructor.stop(root)
+
+    return this.lift(new MoveOperator(nextSource, stopSource, updater, scheduler))
   }
 
   // FIXME: This isn't an operator, so should it be here?
@@ -97,59 +106,40 @@ export class Delta extends Observable {
     return new this(target, event)::mapTo(this.createValue(value))
   }
 
-  static move (target, updater, scheduler, root = getRoot()) {
-    return this
-      .start(target)
-      ._liftMoveOperator(root, updater, scheduler)
-      ::_switch()
+  static move (target) {
+    return this.create(target)::takeUntil(this.stop(target))
   }
 
-  static moveOnce (target, updater, scheduler, root = getRoot()) {
-    return this
-      .start(target)
-      ::take(1)
-      ._liftMoveOperator(root, updater, scheduler)
-      ::exhaust()
+  static moveTo (endValue, updater, scheduler) {
+    const startValue = this.createValue()
+    return new this(new Generator(startValue, endValue, updater, scheduler))
+  }
+}
+
+export class Generator extends Observable {
+  constructor (startValue, endValue, updater = anchor, scheduler = animationFrame) {
+    super()
+    this.startValue = startValue
+    this.endValue = endValue
+    this.updater = updater
+    this.scheduler = scheduler
   }
 
-  static moveTo (target, endValue, updater, scheduler) {
-    return this
-      .start(target)
-      ._liftDeltaGeneratorOperator(endValue, updater, scheduler)
-      ::_switch()
-  }
-
-  static moveToOnce (target, endValue, updater, scheduler) {
-    return this
-      .start(target)
-      ::take(1)
-      ._liftDeltaGeneratorOperator(endValue, updater, scheduler)
-      ::exhaust()
-  }
-
-  _liftMoveOperator (root, updater, scheduler) {
-    const nextSource = this.constructor.create(root)
-    const stopSource = this.constructor.stop(root)
+  _subscribe (subscriber) {
+    let {startValue, endValue, updater, scheduler} = this
     if (typeof updater === 'function') updater = updater()
-    return this.lift(new MoveOperator(nextSource, stopSource, updater, scheduler))
-  }
-
-  _liftDeltaGeneratorOperator (endValue, updater, scheduler) {
-    if (typeof updater === 'function') updater = updater()
-    else if (!updater) updater = anchor()
-
-    const startValue = this.constructor.createValue()
 
     // We subtract our target delta from the updater's net delta so that
     // it ends up generating that amount of delta in the original orientation
     // as it attempts to bring the netDelta back to 0.
     updater.updateFrame({
       ...endValue,
-      deltaX: -endValue.deltaX,
-      deltaY: -endValue.deltaY,
+      deltaX: startValue.deltaX - endValue.deltaX,
+      deltaY: startValue.deltaY - endValue.deltaY,
     })
 
-    return this.lift(new DeltaGeneratorOperator(startValue, updater, scheduler))
+    return fromDeltaGenerator(startValue, updater, scheduler)
+      ._subscribe(subscriber)
   }
 }
 

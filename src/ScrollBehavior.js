@@ -1,10 +1,16 @@
 import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
+import {_switch} from 'rxjs/operator/switch'
+import {takeUntil} from 'rxjs/operator/takeUntil'
 import {ScrollBehaviorOperator} from './operators/ScrollBehaviorOperator'
 import {UpdaterStack} from './kinematic/UpdaterStack'
 import {momentum} from './kinematic/momentum'
 import {anchor} from './kinematic/anchor'
 import {bounds} from './kinematic/bounds'
+import {getRoot} from './utils'
+
+const createDefaultDeltaOperator = Delta => (target, ...args) =>
+  Delta.start(target).move(getRoot(), ...args)::_switch()
 
 export class ScrollBehavior extends BehaviorSubject {
   constructor (target, DeltaOrDeltaOperator, rectOrUpdater, updater, initialValue) {
@@ -23,7 +29,7 @@ export class ScrollBehavior extends BehaviorSubject {
       this.target = target
       this.Delta = DeltaOrDeltaOperator
       this.rect = {...rectOrUpdater}
-      deltaOperator = (...args) => this.Delta.move(...args)
+      deltaOperator = createDefaultDeltaOperator(this.Delta)
 
       const {x = 0, y = 0} = this.rect
       this._value = {x, y, ...initialValue}
@@ -97,17 +103,20 @@ export class ScrollBehavior extends BehaviorSubject {
     const delta = this.Delta.computeDelta(this._value, value, this.updater)
     const updater = anchor(opts)
     const deltaOperator = target =>
-      this.Delta.moveTo(target, delta, updater, scheduler)
+      this.Delta.moveTo(delta, updater, scheduler)
     return new ScrollBehavior(this, deltaOperator, updater)
   }
 
   anchorTo (value, opts, scheduler) {
     const delta = this.Delta.computeDelta(this._value, value, this.updater)
     const updater = anchor(opts)
-    const deltaOperator = target => merge(
-      this.Delta.moveToOnce(target, delta, updater, scheduler),
-      this.Delta.move(target, updater, scheduler),
-    )
+    const deltaOperator = target => {
+      const start = this.Delta.start(target)
+      return merge(
+        this.Delta.moveTo(delta, updater, scheduler)::takeUntil(start),
+        start.move(getRoot(), updater, scheduler)::_switch(),
+      )
+    }
     return new ScrollBehavior(this, deltaOperator, updater)
   }
 
@@ -115,7 +124,7 @@ export class ScrollBehavior extends BehaviorSubject {
     const cloned = this._cloneUpdater()
     let updater = momentum(opts)
     if (cloned) updater = cloned.add(updater)
-    const deltaOperator = (...args) => this.Delta.move(...args)
+    const deltaOperator = createDefaultDeltaOperator(this.Delta)
     return new ScrollBehavior(this, deltaOperator, updater)
   }
 }
