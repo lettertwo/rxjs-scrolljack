@@ -1,5 +1,5 @@
 import Rx from 'rxjs'
-import {ScrollBehavior, Wheel, Mouse, Touch, combineDeltas, momentum} from 'rxjs-scrolljack'
+import {ScrollBehavior, Wheel, Mouse, Touch, combineDeltas} from 'rxjs-scrolljack'
 
 /**
  * @typedef Offset
@@ -186,8 +186,12 @@ function main () {
 
     // Generate animated movement whenever a click occurs.
     const clickInputs = clicks.switchMap(offset => lastOffset
-      .take(1) // Start with the last offset.
-      .mergeMap(v => scrollBehavior.startWith(v).moveTo(offset))
+      .take(1) // Take the last offset.
+      .mergeMap(v => scrollBehavior  // Map to scroll behavior.
+        .startWith(v) // Start scroll behavior with the last offset.
+        .moveTo(offset)  // Emulate scrolling to the click's offset.
+        .takeUntil(Delta.start(container))  // Cancel if actual scrolling occurs.
+      )
     )
 
     const inputs = lastOffset
@@ -197,7 +201,6 @@ function main () {
 
     const outputs = scrollBehavior
       .momentum()  // Perform a decceleration at the end of a scroll behavior.
-      .skip(1)  // Skip the first update because it's the last offset!
       .do(lastOffset)  // Update offset with scrollBehavior output.
 
     // Subscribe to both inputs and outputs, but only pass outputs through.
