@@ -31,6 +31,8 @@ export function * createDeltaGenerator (scheduler, updater, lastValue, time) {
       deltaT = F
     }
 
+    let t = deltaT / 1000
+
     // Calculate the number of frames that have been 'dropped' since the
     // last update. Dropped frames are updates that should've happened within
     // a window of time, but didn't, usually because of jank, normalizing
@@ -43,12 +45,13 @@ export function * createDeltaGenerator (scheduler, updater, lastValue, time) {
         deltaY: deltaY / (droppedFrames + 1),
         deltaT: F,
       }
-      droppedValue.velocityX = deltaX / deltaT
-      droppedValue.velocityY = deltaY / deltaT
+      droppedValue.velocityX = deltaX / t
+      droppedValue.velocityY = deltaY / t
 
       // Subtract dropped frames' time deltas from the original time delta
       // to get the time deltas for just the latest frame.
       deltaT = deltaT - droppedValue.deltaT * droppedFrames
+      t = deltaT / 1000
 
       // Apply the dropped frame deltas to the destination.
       for (let i = 0; i < droppedFrames; i++) {
@@ -67,8 +70,8 @@ export function * createDeltaGenerator (scheduler, updater, lastValue, time) {
       deltaX,
       deltaY,
       deltaT,
-      velocityX: deltaX / deltaT,
-      velocityY: deltaY / deltaT,
+      velocityX: deltaX / t,
+      velocityY: deltaY / t,
     }
 
     time = now
