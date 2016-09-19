@@ -2,8 +2,9 @@ import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
 import {animationFrame} from 'rxjs/scheduler/animationFrame'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
-import {takeUntil} from 'rxjs/operator/takeUntil'
+import {exhaust} from 'rxjs/operator/exhaust'
 import {mapTo} from 'rxjs/operator/mapTo'
+import {take} from 'rxjs/operator/take'
 import {fromDeltaGenerator} from './operators/fromDeltaGenerator'
 import {fromHijackableEvent} from './operators/fromHijackableEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
@@ -106,8 +107,8 @@ export class Delta extends Observable {
     return new this(target, event)::mapTo(this.createValue(value))
   }
 
-  static move (target) {
-    return this.create(target)::takeUntil(this.stop(target))
+  static move (target, ...args) {
+    return this.create(target)::take(1).move(target, ...args)::exhaust()
   }
 
   static moveTo (endValue, updater, scheduler) {
