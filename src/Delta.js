@@ -11,7 +11,7 @@ import {DeltaOperator} from './operators/DeltaOperator'
 import {MoveOperator} from './operators/MoveOperator'
 import {AccumulationOperator} from './operators/AccumulationOperator'
 import {HijackOperator} from './operators/HijackOperator'
-import {anchor} from './kinematic/anchor'
+import {anchor} from './updaters/anchor'
 
 const DEFAULT_VALUE = Object.freeze({
   deltaT: 0,

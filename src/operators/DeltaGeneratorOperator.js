@@ -2,7 +2,7 @@ import {Subscriber} from 'rxjs/Subscriber'
 import {Subject} from 'rxjs/Subject'
 import {takeUntil} from 'rxjs/operator/takeUntil'
 import {fromDeltaGenerator} from './fromDeltaGenerator'
-import {anchor} from '../kinematic/anchor'
+import {anchor} from '../updaters/anchor'
 
 export class DeltaGeneratorSubscriber extends Subscriber {
   constructor (destination, initialValue, updater = anchor, scheduler) {
