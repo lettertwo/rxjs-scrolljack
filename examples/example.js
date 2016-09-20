@@ -1,5 +1,15 @@
 import Rx from 'rxjs'
-import {ScrollBehavior, Wheel, Mouse, Touch, combineDeltas} from 'rxjs-scrolljack'
+import {Wheel, Mouse, Touch, momentum, bounds, combineDeltas} from 'rxjs-scrolljack'
+
+/**
+ * @typedef Delta
+ * @type {Object}
+ * @property {Number} deltaX
+ * @property {Number} deltaY
+ * @property {Number} deltaT
+ * @property {Number} velocityX
+ * @property {Number} velocityY
+ */
 
 /**
  * @typedef Offset
@@ -20,6 +30,11 @@ import {ScrollBehavior, Wheel, Mouse, Touch, combineDeltas} from 'rxjs-scrolljac
  * from the specified Observable classes.
  */
 const Delta = combineDeltas(Wheel, Mouse, Touch)
+
+/**
+ * Create a momentum updater.
+ */
+const updater = momentum()
 
 /**
  * Parse an integer from a value.
@@ -55,7 +70,6 @@ const parseChangeValue = e => parseInt(e.currentTarget.value, 10)
 const valueFromInput = input => Rx.Observable
   .fromEvent(input, 'change')
   .map(parseChangeValue)
-  .startWith(0)
 
 /**
  * Get the scrollable area of the content within its container
@@ -133,26 +147,6 @@ function main () {
   }
 
   /**
-   * The valid scroll area as the shape `{width, height}`.
-   * @type {Observable<Bounds>}
-   */
-  const bounds = Rx.Observable
-    .fromEvent(window, 'resize')
-    .map(() => getScrollBounds(content, container))
-    .startWith(getScrollBounds(content, container))
-
-  /**
-   * The stream of clicks, which are mapped to scroll movements.
-   * @type {Observable<Offset>}
-   */
-  const clicks = Rx.Observable
-    .fromEvent(content, 'click')
-    .map(e => ({
-      x: e.clientX,
-      y: e.clientY,
-    }))
-
-  /**
    * Keep track of the last scroll offset.
    * We merge this with input values and apply
    * the generated offsets to the scroll behavior.
@@ -164,48 +158,115 @@ function main () {
   lastOffset.next({x: 0, y: 0})
 
   /**
-   * Merge input values with the last offset into the shape `{x, y}`.
+   * An observable of start deltas.
+   * These represent the start of some scroll input.
+   * @type {Observable<Delta>}
+   */
+  const startDeltas = Delta.start(container)
+
+  /**
+   * Merge input values with the last offset into delta shapes.
    * This is a combination of values from the input fields,
    * plus the last offset from the scroll behavior.
-   * @type {Observable<Offset>}
+   * @type {Observable<Delta>}
    */
-  const textInputs = Rx.Observable.merge(
-    valueFromInput(inputX).withLatestFrom(lastOffset, (x, v) => ({...v, x})),
-    valueFromInput(inputY).withLatestFrom(lastOffset, (y, v) => ({...v, y})),
+  const textDeltas = Rx.Observable.merge(
+    valueFromInput(inputX).withLatestFrom(lastOffset, (newX, {x: oldX}) =>
+      Delta.createValue({deltaX: newX - oldX})
+    ),
+    valueFromInput(inputY).withLatestFrom(lastOffset, (newY, {y: oldY}) =>
+      Delta.createValue({deltaY: newY - oldY})
+    ),
   )
 
   /**
-   * The scroll offset as the shape `{x, y}`.
+   * The stream of clicks, which are mapped to scroll movements.
+   * @type {Observable<Delta>}
+   */
+  const clickDeltas = Rx.Observable
+    .fromEvent(content, 'click')
+    .switchMap(event => lastOffset
+      .take(1) // Take the last offset.
+      .mergeMap(offset => Delta  // Emulate scrolling to the click's offset.
+        .moveTo(Delta.createValue({
+          deltaX: event.clientX - offset.x,
+          deltaY: event.clientY - offset.y,
+        }))
+        .takeUntil(startDeltas)  // Cancel if actual scrolling occurs.
+      )
+    )
+
+  /**
+   * Merge click and text delta streams together, as these represent the
+   * possible delta sources that are not coming from scroll input.
+   * @type {Observable<Delta>}
+   */
+  const moveToDeltas = Rx.Observable.merge(clickDeltas, textDeltas)
+
+  /**
+   * An observable of move deltas.
+   * These represent the stream of deltas
+   * resulting from scroll input (wheel, touch, etc).
+   * @type {Observable<Delta>}
+   */
+  const moveDeltas = startDeltas
+    .switchMap(startDelta => Delta
+      .move(window, updater)
+      .startWith(startDelta)
+      .takeUntil(moveToDeltas)
+    )
+
+  /**
+   * The valid scroll area as the shape `{width, height}`.
+   * @type {Observable<Bounds>}
+   */
+  const scrollBounds = Rx.Observable
+    .fromEvent(window, 'resize')
+    .map(() => getScrollBounds(content, container))
+    .startWith(getScrollBounds(content, container))
+
+  /**
+   * The scroll offsets as the shape `{x, y}`.
    * This is a combination of values from the input fields,
    * plus the last offset from the scroll behavior.
    * @type {Observable<Offset>}
    */
-  const offset = bounds.switchMap(bounds => {
-    // We create a new ScrollBehavior whenever the bounds change.
-    const scrollBehavior = new ScrollBehavior(container, Delta, bounds)
+  const offsets = scrollBounds.switchMap(scrollBounds => lastOffset
+    .take(1)
+    .mergeMap(offset => {
+      // Create a bounds rectangle from scroll bounds.
+      // We use this to adjust offsets, preventing srolling outside
+      // of the scrollable area.
+      const rect = bounds(scrollBounds, {
+        deltaX: offset.x,
+        deltaY: offset.y,
+      })
 
-    // Generate animated movement whenever a click occurs.
-    const clickInputs = clicks.switchMap(offset => lastOffset
-      .take(1) // Take the last offset.
-      .mergeMap(v => scrollBehavior  // Map to scroll behavior.
-        .startWith(v) // Start scroll behavior with the last offset.
-        .moveTo(offset)  // Emulate scrolling to the click's offset.
-        .takeUntil(Delta.start(container))  // Cancel if actual scrolling occurs.
-      )
-    )
+      // Compute the next offset from the previous one plus a delta.
+      const toNextOffset = ({x, y}, delta) => {
+        // Adjust the delta to our scroll bounds.
+        delta = rect.computeNext(delta)
+        // Update our move function with the adjusted delta.
+        updater.updateFrame(delta)
+        // Round our delta values so we get a pixel-snapped scroll animation.
+        delta.deltaX = Math.round(delta.deltaX)
+        delta.deltaY = Math.round(delta.deltaY)
+        // Update our rect with the final deltas.
+        rect.updateFrame(delta)
+        // Return the next offset.
+        return {
+          x: x + delta.deltaX,
+          y: y + delta.deltaY,
+        }
+      }
 
-    const inputs = lastOffset
-      .take(1) // Start with the last offset.
-      .concat(Rx.Observable.merge(textInputs, clickInputs))
-      .do(scrollBehavior)  // Update scrollBehavior with input.
-
-    const outputs = scrollBehavior
-      .momentum()  // Perform a decceleration at the end of a scroll behavior.
-      .do(lastOffset)  // Update offset with scrollBehavior output.
-
-    // Subscribe to both inputs and outputs, but only pass outputs through.
-    return Rx.Observable.combineLatest(inputs, outputs, (i, o) => o)
-  })
+      return Rx.Observable
+        .merge(moveDeltas, moveToDeltas)  // Merge our delta streams.
+        .startWith(Delta.createValue())  // Start no delta.
+        .scan(toNextOffset, offset)  // Scan each delta from last offset to next.
+        .do(lastOffset)  // Update the last offset.
+    })
+  )
 
   /**
    * Whether or not scroll input has started.
@@ -213,14 +274,14 @@ function main () {
    */
   const scrolling = Rx.Observable
     .merge(
-      Delta.start(container).mapTo(true),
-      Delta.stop(container).mapTo(false),
+      startDeltas.mapTo(true),
+      Delta.stop(window).mapTo(false),
     )
     .startWith(false)
 
   // Combine the scrolling state with the scroll offset to render the view.
   return Rx.Observable
-    .combineLatest(scrolling, offset)
+    .combineLatest(scrolling, offsets)
     .subscribe(latest => render(...latest))
 }
 
