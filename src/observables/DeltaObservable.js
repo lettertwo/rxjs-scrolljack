@@ -116,8 +116,6 @@ export class DeltaObservable extends Observable {
 }
 
 export const combineDeltas = (...DeltaClasses) => {
-  // FIXME: Releasing outside doesn't work! We need a way to specify
-  // roots to create and stop that are different from target!
   class MultiDeltaObservable extends DeltaObservable {
     constructor (target) {
       if (typeof target[$$observable] === 'function') {
