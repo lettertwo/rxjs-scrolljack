@@ -5,7 +5,7 @@ import {mergeMap} from 'rxjs/operator/mergeMap'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {map} from 'rxjs/operator/map'
 import {first} from 'rxjs/operator/first'
-import {fromDeltaGenerator} from '../observables/fromDeltaGenerator'
+import {DeltaGenerator} from '../observables/DeltaGenerator'
 
 /**
  * MoveOperator converts an observable of delta values to a higher-order
@@ -42,7 +42,7 @@ export class MoveSubscriber extends Subscriber {
   }
 
   createNextSource = stops => (
-    fromDeltaGenerator(stops, this.updater, this.scheduler)
+    DeltaGenerator.from(stops, this.updater, this.scheduler)
   )
 
   _next (starts) {

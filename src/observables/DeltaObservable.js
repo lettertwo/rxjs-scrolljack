@@ -1,17 +1,15 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
-import {animationFrame} from 'rxjs/scheduler/animationFrame'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {exhaust} from 'rxjs/operator/exhaust'
 import {mapTo} from 'rxjs/operator/mapTo'
 import {take} from 'rxjs/operator/take'
-import {fromDeltaGenerator} from './fromDeltaGenerator'
+import {DeltaGenerator} from './DeltaGenerator'
 import {fromHijackableEvent} from './fromHijackableEvent'
 import {DeltaOperator} from '../operators/DeltaOperator'
 import {MoveOperator} from '../operators/MoveOperator'
 import {AccumulationOperator} from '../operators/AccumulationOperator'
 import {HijackOperator} from '../operators/HijackOperator'
-import {anchor} from '../updaters/anchor'
 
 const DEFAULT_VALUE = Object.freeze({
   deltaT: 0,
@@ -113,34 +111,7 @@ export class DeltaObservable extends Observable {
 
   static moveTo (endValue, updater, scheduler) {
     const startValue = this.createValue()
-    return new this(new Generator(startValue, endValue, updater, scheduler))
-  }
-}
-
-export class Generator extends Observable {
-  constructor (startValue, endValue, updater = anchor, scheduler = animationFrame) {
-    super()
-    this.startValue = startValue
-    this.endValue = endValue
-    this.updater = updater
-    this.scheduler = scheduler
-  }
-
-  _subscribe (subscriber) {
-    let {startValue, endValue, updater, scheduler} = this
-    if (typeof updater === 'function') updater = updater()
-
-    // We subtract our target delta from the updater's net delta so that
-    // it ends up generating that amount of delta in the original orientation
-    // as it attempts to bring the netDelta back to 0.
-    updater.updateFrame({
-      ...endValue,
-      deltaX: startValue.deltaX - endValue.deltaX,
-      deltaY: startValue.deltaY - endValue.deltaY,
-    })
-
-    return fromDeltaGenerator(startValue, updater, scheduler)
-      ._subscribe(subscriber)
+    return new this(DeltaGenerator.create(startValue, endValue, updater, scheduler))
   }
 }
 

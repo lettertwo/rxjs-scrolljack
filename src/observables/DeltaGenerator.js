@@ -1,18 +1,53 @@
+import {Observable} from 'rxjs/Observable'
 import {from} from 'rxjs/observable/from'
 import {animationFrame} from 'rxjs/scheduler/animationFrame'
+import {anchor} from '../updaters/anchor'
+
+export class DeltaGenerator extends Observable {
+  constructor (startValue, endValue, updater, scheduler) {
+    super()
+    this.startValue = startValue
+    this.endValue = endValue
+    this.updater = updater
+    this.scheduler = scheduler
+  }
+
+  _subscribe (subscriber) {
+    let {startValue, endValue, updater, scheduler} = this
+    if (typeof updater === 'function') updater = updater()
+
+    if (endValue) {
+      // We subtract our target delta from the updater's net delta so that
+      // it ends up generating that amount of delta in the original orientation
+      // as it attempts to bring the netDelta back to 0.
+      updater.updateFrame({
+        ...endValue,
+        deltaX: startValue.deltaX - endValue.deltaX,
+        deltaY: startValue.deltaY - endValue.deltaY,
+      })
+    }
+
+    return DeltaGenerator.from(startValue, updater, scheduler)
+      ._subscribe(subscriber)
+  }
+
+  static create (startValue, endValue, updater = anchor, scheduler = animationFrame) {
+    return new DeltaGenerator(startValue, endValue, updater, scheduler)
+  }
+
+  static from (initialValue, updater = anchor, scheduler = animationFrame) {
+    return from(
+      createDeltaGenerator(scheduler, updater, initialValue, scheduler.now()),
+      scheduler,
+    )
+  }
+}
+
+export default DeltaGenerator
 
 const F = 1000 / 60  // Default frame rate
 
-export const fromDeltaGenerator = (initialValue, updater, scheduler = animationFrame) => {
-  return from(
-    createDeltaGenerator(scheduler, updater, initialValue, scheduler.now()),
-    scheduler,
-  )
-}
-
-export default fromDeltaGenerator
-
-export function * createDeltaGenerator (scheduler, updater, lastValue, time) {
+function * createDeltaGenerator (scheduler, updater, lastValue, time) {
   while (updater.shouldGenerateNext()) {
     let {
       deltaX = 0,
