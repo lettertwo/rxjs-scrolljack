@@ -1,70 +1,21 @@
-import $$observable from 'symbol-observable'
 import {Subscriber} from 'rxjs/Subscriber'
-import {Observable} from 'rxjs/Observable'
-import {Subject} from 'rxjs/Subject'
-import {fromHijackableEvent} from './fromHijackableEvent'
-import {multicast} from 'rxjs/operator/multicast'
-import {filter} from 'rxjs/operator/filter'
 import {async} from 'rxjs/scheduler/async'
 import {timeStamp, createWheelEventFrom} from '../utils'
-import {WHEEL, WHEEL_START, WHEEL_MOVE, WHEEL_END} from '../events'
+import {WHEEL_START, WHEEL_MOVE, WHEEL_END} from '../events'
 
 const SCROLL_STOP_DELAY = 60
 
 const dispatchStop = subscriber => { subscriber.stopNow() }
 
-const wheelTargets = new WeakMap()
-
-const getEventSource = target => {
-  if (!wheelTargets.has(target)) {
-    wheelTargets.set(target, fromHijackableEvent(target, WHEEL)
-      .hijack()
-      .lift(new WheelEventEmulatorOperator())
-        ::multicast(new Subject())
-        .refCount()
-    )
-  }
-
-  return wheelTargets.get(target)
-}
-
-class FromEmulatedWheelEventObserverable extends Observable {
-  constructor (target, event, predicate) {
-    if (typeof target[$$observable] === 'function') {
-      super()
-      this.source = target[$$observable]()
-    } else {
-      super()
-      this.source = getEventSource(target)
-        ::filter(({type}) => type === event)
-
-      if (predicate) {
-        this.source = this.source::filter(predicate)
-      }
-    }
-  }
-
-  lift (operator) {
-    const observable = new FromEmulatedWheelEventObserverable(this)
-    observable.operator = operator
-    return observable
-  }
-
-  static create (...args) {
-    return new FromEmulatedWheelEventObserverable(...args)
-  }
-}
-
-export const fromEmulatedWheelEvent = FromEmulatedWheelEventObserverable.create
-
-
-class WheelEventEmulatorOperator {
+export class WheelEventEmulatorOperator {
   call (subscriber, source) {
     return source._subscribe(
       new WheelEventEmulatorSubcriber(subscriber)
     )
   }
 }
+
+export default WheelEventEmulatorOperator
 
 class WheelEventEmulatorSubcriber extends Subscriber {
   constructor (destination) {
