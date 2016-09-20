@@ -1,6 +1,5 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
-import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {exhaust} from 'rxjs/operator/exhaust'
 import {mapTo} from 'rxjs/operator/mapTo'
 import {take} from 'rxjs/operator/take'
@@ -113,34 +112,6 @@ export class DeltaObservable extends Observable {
     const startValue = this.createValue()
     return new this(DeltaGenerator.create(startValue, endValue, updater, scheduler))
   }
-}
-
-export const combineDeltas = (...DeltaClasses) => {
-  class MultiDeltaObservable extends DeltaObservable {
-    constructor (target) {
-      if (typeof target[$$observable] === 'function') {
-        super(target)
-      } else {
-        super(merge(...DeltaClasses.map(DeltaClass => (
-          DeltaClass.create(target)
-        ))))
-      }
-    }
-
-    static start (target) {
-      return this.create(merge(...DeltaClasses.map(DeltaClass => (
-        DeltaClass.start(target)
-      ))))
-    }
-
-    static stop (target) {
-      return this.create(merge(...DeltaClasses.map(DeltaClass => (
-        DeltaClass.stop(target)
-      ))))
-    }
-  }
-
-  return MultiDeltaObservable
 }
 
 export default DeltaObservable

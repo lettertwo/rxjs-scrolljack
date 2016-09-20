@@ -1,5 +1,5 @@
 import Rx from 'rxjs'
-import {Wheel, Mouse, Touch, momentum, bounds, combineDeltas} from 'rxjs-scrolljack'
+import {Wheel, Mouse, Touch, momentum, bounds, combine} from 'rxjs-scrolljack'
 
 /**
  * @typedef Delta
@@ -29,7 +29,7 @@ import {Wheel, Mouse, Touch, momentum, bounds, combineDeltas} from 'rxjs-scrollj
  * Create an Observable class that combines values
  * from the specified Observable classes.
  */
-const Delta = combineDeltas(Wheel, Mouse, Touch)
+const Delta = combine(Wheel, Mouse, Touch)
 
 /**
  * Create a momentum updater.
