@@ -1,7 +1,7 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
 import {Subject} from 'rxjs/Subject'
-import {fromHijackableEvent} from './fromHijackableEvent'
+import {HijackableEventObservable} from './HijackableEventObservable'
 import {multicast} from 'rxjs/operator/multicast'
 import {filter} from 'rxjs/operator/filter'
 import {WheelEventEmulatorOperator} from '../operators/WheelEventEmulatorOperator'
@@ -11,7 +11,7 @@ const wheelTargets = new WeakMap()
 
 const getEventSource = target => {
   if (!wheelTargets.has(target)) {
-    wheelTargets.set(target, fromHijackableEvent(target, WHEEL)
+    wheelTargets.set(target, HijackableEventObservable.create(target, WHEEL)
       .hijack()
       .lift(new WheelEventEmulatorOperator())
         ::multicast(new Subject())

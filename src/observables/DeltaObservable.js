@@ -4,7 +4,7 @@ import {exhaust} from 'rxjs/operator/exhaust'
 import {mapTo} from 'rxjs/operator/mapTo'
 import {take} from 'rxjs/operator/take'
 import {DeltaGenerator} from './DeltaGenerator'
-import {fromHijackableEvent} from './fromHijackableEvent'
+import {HijackableEventObservable} from './HijackableEventObservable'
 import {DeltaOperator} from '../operators/DeltaOperator'
 import {MoveOperator} from '../operators/MoveOperator'
 import {AccumulationOperator} from '../operators/AccumulationOperator'
@@ -41,7 +41,7 @@ export class DeltaObservable extends Observable {
       this.source = target[$$observable]()
     } else {
       super()
-      this.source = fromHijackableEvent(target, event, ...hijackArgs)
+      this.source = HijackableEventObservable.create(target, event, ...hijackArgs)
       this.source.operator = new DeltaOperator()
     }
   }

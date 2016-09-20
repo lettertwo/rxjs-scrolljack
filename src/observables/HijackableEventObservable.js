@@ -4,7 +4,7 @@ import {fromEvent} from 'rxjs/observable/fromEvent'
 import {filter} from 'rxjs/operator/filter'
 import {HijackOperator} from '../operators/HijackOperator'
 
-class FromHijackableEventObserverable extends Observable {
+export class HijackableEventObservable extends Observable {
   constructor (target, event, predicate, ...args) {
     if (typeof target[$$observable] === 'function') {
       super()
@@ -19,13 +19,13 @@ class FromHijackableEventObserverable extends Observable {
   }
 
   lift (operator) {
-    const observable = new FromHijackableEventObserverable(this)
+    const observable = new HijackableEventObservable(this)
     observable.operator = operator
     return observable
   }
 
   static create (...args) {
-    return new FromHijackableEventObserverable(...args)
+    return new HijackableEventObservable(...args)
   }
 
   hijack (predicate) {
@@ -33,4 +33,4 @@ class FromHijackableEventObserverable extends Observable {
   }
 }
 
-export const fromHijackableEvent = FromHijackableEventObserverable.create
+export default HijackableEventObservable
