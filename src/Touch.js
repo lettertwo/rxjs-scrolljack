@@ -3,13 +3,13 @@ import {skipWhile} from 'rxjs/operator/skipWhile'
 import {take} from 'rxjs/operator/take'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {mergeMap} from 'rxjs/operator/mergeMap'
-import {Delta} from './Delta'
+import {DeltaObservable} from './observables/DeltaObservable'
 import {inside} from './utils'
 import {TOUCH_START, TOUCH_MOVE, TOUCH_END, TOUCH_CANCEL} from './events'
 
 const excludeMultiTouch = e => e.touches.length <= 1
 
-export class Touch extends Delta {
+export class Touch extends DeltaObservable {
   constructor (target, event = TOUCH_MOVE) {
     super(target, event, excludeMultiTouch)
   }

@@ -2,7 +2,7 @@ import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
 import {fromEvent} from 'rxjs/observable/fromEvent'
 import {filter} from 'rxjs/operator/filter'
-import {HijackOperator} from './HijackOperator'
+import {HijackOperator} from '../operators/HijackOperator'
 
 class FromHijackableEventObserverable extends Observable {
   constructor (target, event, predicate, ...args) {

@@ -1,10 +1,10 @@
 import $$observable from 'symbol-observable'
-import {Delta} from './Delta'
+import {DeltaObservable} from './observables/DeltaObservable'
 import {DeltaOperator} from './operators/DeltaOperator'
-import {fromEmulatedWheelEvent} from './operators/fromEmulatedWheelEvent'
+import {fromEmulatedWheelEvent} from './observables/fromEmulatedWheelEvent'
 import {WHEEL_START, WHEEL_MOVE, WHEEL_END} from './events'
 
-export class Wheel extends Delta {
+export class Wheel extends DeltaObservable {
   constructor (target, event = WHEEL_MOVE) {
     if (typeof target[$$observable] === 'function') {
       super(target)

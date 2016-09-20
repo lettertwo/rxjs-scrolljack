@@ -1,7 +1,7 @@
 import {Subscriber} from 'rxjs/Subscriber'
 import {Subject} from 'rxjs/Subject'
 import {takeUntil} from 'rxjs/operator/takeUntil'
-import {fromDeltaGenerator} from './fromDeltaGenerator'
+import {fromDeltaGenerator} from '../observables/fromDeltaGenerator'
 import {anchor} from '../updaters/anchor'
 
 export class DeltaGeneratorSubscriber extends Subscriber {

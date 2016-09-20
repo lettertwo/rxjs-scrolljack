@@ -3,11 +3,11 @@ import {takeUntil} from 'rxjs/operator/takeUntil'
 import {take} from 'rxjs/operator/take'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
-import {Delta} from './Delta'
+import {DeltaObservable} from './observables/DeltaObservable'
 import {inside} from './utils'
 import {MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, CLICK} from './events'
 
-export class Mouse extends Delta {
+export class Mouse extends DeltaObservable {
   constructor (target, event = MOUSE_MOVE) {
     super(target, event)
   }

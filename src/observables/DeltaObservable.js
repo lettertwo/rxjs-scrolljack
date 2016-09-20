@@ -5,13 +5,13 @@ import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {exhaust} from 'rxjs/operator/exhaust'
 import {mapTo} from 'rxjs/operator/mapTo'
 import {take} from 'rxjs/operator/take'
-import {fromDeltaGenerator} from './operators/fromDeltaGenerator'
-import {fromHijackableEvent} from './operators/fromHijackableEvent'
-import {DeltaOperator} from './operators/DeltaOperator'
-import {MoveOperator} from './operators/MoveOperator'
-import {AccumulationOperator} from './operators/AccumulationOperator'
-import {HijackOperator} from './operators/HijackOperator'
-import {anchor} from './updaters/anchor'
+import {fromDeltaGenerator} from './fromDeltaGenerator'
+import {fromHijackableEvent} from './fromHijackableEvent'
+import {DeltaOperator} from '../operators/DeltaOperator'
+import {MoveOperator} from '../operators/MoveOperator'
+import {AccumulationOperator} from '../operators/AccumulationOperator'
+import {HijackOperator} from '../operators/HijackOperator'
+import {anchor} from '../updaters/anchor'
 
 const DEFAULT_VALUE = Object.freeze({
   deltaT: 0,
@@ -35,7 +35,7 @@ const calculateDeltaY = (start, end) => {
   return end - start
 }
 
-export class Delta extends Observable {
+export class DeltaObservable extends Observable {
   constructor (target, event, ...hijackArgs) {
     if (!target) {
       super()
@@ -147,7 +147,7 @@ export class Generator extends Observable {
 export const combineDeltas = (...DeltaClasses) => {
   // FIXME: Releasing outside doesn't work! We need a way to specify
   // roots to create and stop that are different from target!
-  class MultiDelta extends Delta {
+  class MultiDeltaObservable extends DeltaObservable {
     constructor (target) {
       if (typeof target[$$observable] === 'function') {
         super(target)
@@ -171,7 +171,7 @@ export const combineDeltas = (...DeltaClasses) => {
     }
   }
 
-  return MultiDelta
+  return MultiDeltaObservable
 }
 
-export default Delta
+export default DeltaObservable

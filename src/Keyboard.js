@@ -1,7 +1,7 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
 import {takeUntil} from 'rxjs/operator/takeUntil'
-import {fromHijackableEvent} from './operators/fromHijackableEvent'
+import {fromHijackableEvent} from './observables/fromHijackableEvent'
 import {DeltaOperator} from './operators/DeltaOperator'
 import {KEY_START, KEY_MOVE, KEY_STOP} from './events'
 
