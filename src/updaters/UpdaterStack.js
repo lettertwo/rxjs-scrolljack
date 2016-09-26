@@ -54,16 +54,19 @@ export class UpdaterStack extends Updater {
       }
     }
     // Return a conveniently bound remove method!
-    return () => { this.remove(...updaters) }
+    return () => this.remove(...updaters)
   }
 
   remove (...updaters) {
     for (const updater of updaters) {
       if (this.updaters.has(updater)) {
         this._cache = null
+        const updaterToRemove = this.updaters.get(updater)
         this.updaters.delete(updater)
+        return updaterToRemove
       }
     }
+    return null
   }
 
   push (...updaters) {
@@ -73,9 +76,12 @@ export class UpdaterStack extends Updater {
 
   pop () {
     if (this.updaters.size) {
-      this.remove(this.getUpdaters().pop())
+      const updaterToRemove = this.getUpdaters().pop()
+      this.remove(updaterToRemove)
       this._cache = null
+      return updaterToRemove
     }
+    return null
   }
 
   unshift (...updaters) {
