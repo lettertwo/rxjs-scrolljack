@@ -78,20 +78,23 @@ export class UpdaterStack extends Updater {
     }
   }
 
-  shift (...updaters) {
+  unshift (...updaters) {
     const entries = this.updaters.entries()
-    this.clear()
+    this.updaters = new Map()
     this.push(...updaters)
     for (const [k, v] of entries) {
       this.updaters.set(k, v)
     }
   }
 
-  unshift () {
+  shift () {
     if (this.updaters.size) {
-      this.remove(this.getUpdaters().unshift())
+      const updaterToRemove = this.getUpdaters().shift()
+      this.remove(updaterToRemove)
       this._cache = null
+      return updaterToRemove
     }
+    return null
   }
 
   replace (...updaters) {
