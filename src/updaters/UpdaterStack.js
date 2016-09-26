@@ -38,14 +38,14 @@ export class UpdaterStack extends Updater {
   get size () { return this.updaters.size }
 
   getUpdaters () {
-    if (!this._updaters) {
-      this._updaters = Array.from(this.updaters.values())
+    if (!this._cache) {
+      this._cache = Array.from(this.updaters.values())
     }
-    return this._updaters
+    return [...this._cache]
   }
 
   add (...updaters) {
-    this._updaters = null
+    this._cache = null
     for (const updater of updaters) {
       if (!this.updaters.has(updater)) {
         const u = typeof updater === 'function' ? updater() : updater
@@ -58,28 +58,27 @@ export class UpdaterStack extends Updater {
   }
 
   remove (...updaters) {
-    this._updaters = null
     for (const updater of updaters) {
       if (this.updaters.has(updater)) {
+        this._cache = null
         this.updaters.delete(updater)
       }
     }
   }
 
   push (...updaters) {
-    this._updaters = null
+    this._cache = null
     this.add(...updaters)
   }
 
   pop () {
     if (this.updaters.size) {
       this.remove(this.getUpdaters().pop())
-      this._updaters = null
+      this._cache = null
     }
   }
 
   shift (...updaters) {
-    this._updaters = null
     const entries = this.updaters.entries()
     this.clear()
     this.push(...updaters)
@@ -91,7 +90,7 @@ export class UpdaterStack extends Updater {
   unshift () {
     if (this.updaters.size) {
       this.remove(this.getUpdaters().unshift())
-      this._updaters = null
+      this._cache = null
     }
   }
 
@@ -101,7 +100,7 @@ export class UpdaterStack extends Updater {
   }
 
   clear () {
-    this._updaters = null
+    this._cache = null
     this.updaters.clear()
   }
 
