@@ -27,10 +27,10 @@ export class Mouse extends DeltaObservable {
   }
 
   static stop (target) {
-    return merge(
+    return new this(merge(
       super.stop(target, MOUSE_UP),
       super.stop(target, CLICK),
-    )
+    ))
   }
 }
 

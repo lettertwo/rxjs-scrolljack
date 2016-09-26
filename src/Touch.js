@@ -29,10 +29,10 @@ export class Touch extends DeltaObservable {
   }
 
   static stop (target) {
-    return merge(
+    return new this(merge(
       super.stop(target, TOUCH_END),
       super.stop(target, TOUCH_CANCEL),
-    )
+    ))
   }
 }
 
