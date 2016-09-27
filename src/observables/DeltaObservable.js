@@ -7,6 +7,7 @@ import {DeltaGenerator} from './DeltaGenerator'
 import {HijackableEventObservable} from './HijackableEventObservable'
 import {DeltaOperator} from '../operators/DeltaOperator'
 import {MoveOperator} from '../operators/MoveOperator'
+import {RectOperator} from '../operators/RectOperator'
 import {MomentumOperator} from '../operators/MomentumOperator'
 import {AccumulationOperator} from '../operators/AccumulationOperator'
 import {HijackOperator} from '../operators/HijackOperator'
@@ -68,6 +69,10 @@ export class DeltaObservable extends Observable {
     return this.lift(new MoveOperator(nextSource, stopSource))
   }
 
+  rect (bounds, initialValue) {
+    initialValue = this.constructor.createValue(initialValue)
+    return this.lift(new RectOperator(bounds, initialValue))
+  }
 
   momentum (opts, scheduler) {
     return this.lift(new MomentumOperator(opts, scheduler))
