@@ -61,13 +61,11 @@ export class DeltaObservable extends Observable {
     return this.lift(new HijackOperator(predicate))
   }
 
-  move (root, updater, scheduler) {
-    if (typeof updater === 'function') updater = updater()
-
+  move (root) {
     const nextSource = this.constructor.create(root)
     const stopSource = this.constructor.stop(root)
+    return this.lift(new MoveOperator(nextSource, stopSource))
 
-    return this.lift(new MoveOperator(nextSource, stopSource, updater, scheduler))
   }
 
   // FIXME: This isn't an operator, so should it be here?
