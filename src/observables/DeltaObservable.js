@@ -53,9 +53,8 @@ export class DeltaObservable extends Observable {
   }
 
   accumulate (initialValue) {
-    return this.lift(
-      new AccumulationOperator(this.constructor.createValue(initialValue))
-    )
+    initialValue = this.constructor.createValue(initialValue)
+    return this.lift(new AccumulationOperator(initialValue))
   }
 
   hijack (predicate) {
