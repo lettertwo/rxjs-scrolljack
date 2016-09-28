@@ -1,5 +1,5 @@
 import Rx from 'rxjs'
-import {Wheel, Mouse, Touch, momentum, bounds, combine} from 'rxjs-scrolljack'
+import {Wheel, Mouse, Touch, combine} from 'rxjs-scrolljack'
 
 /**
  * @typedef Delta
@@ -30,11 +30,6 @@ import {Wheel, Mouse, Touch, momentum, bounds, combine} from 'rxjs-scrolljack'
  * from the specified Observable classes.
  */
 const Delta = combine(Wheel, Mouse, Touch)
-
-/**
- * Create a momentum updater.
- */
-const updater = momentum()
 
 /**
  * Parse an integer from a value.
@@ -82,6 +77,18 @@ const valueFromInput = input => Rx.Observable
 const getScrollBounds = (content, container) => ({
   width: Math.max(0, content.scrollWidth - container.offsetWidth),
   height: Math.max(0, content.scrollHeight - container.offsetHeight),
+})
+
+/**
+ * Compute the next offset from the previous one plus a delta.
+ *
+ * @param {Offset} lastOffset - The last offset.
+ * @param {Delta} delta - The delta to apply.
+ * @returns {Offset} - The new offset.
+ */
+const computeNextOffset = (lastOffset, delta) => ({
+  x: lastOffset.x + delta.deltaX,
+  y: lastOffset.y + delta.deltaY,
 })
 
 /**
@@ -204,19 +211,6 @@ function main () {
   const moveToDeltas = Rx.Observable.merge(clickDeltas, textDeltas)
 
   /**
-   * An observable of move deltas.
-   * These represent the stream of deltas
-   * resulting from scroll input (wheel, touch, etc).
-   * @type {Observable<Delta>}
-   */
-  const moveDeltas = startDeltas
-    .switchMap(startDelta => Delta
-      .move(window, updater)
-      .startWith(startDelta)
-      .takeUntil(moveToDeltas)
-    )
-
-  /**
    * The valid scroll area as the shape `{width, height}`.
    * @type {Observable<Bounds>}
    */
@@ -231,40 +225,29 @@ function main () {
    * plus the last offset from the scroll behavior.
    * @type {Observable<Offset>}
    */
-  const offsets = scrollBounds.switchMap(scrollBounds => lastOffset
-    .take(1)
-    .mergeMap(offset => {
-      // Create a bounds rectangle from scroll bounds.
-      // We use this to adjust offsets, preventing srolling outside
-      // of the scrollable area.
-      const rect = bounds(scrollBounds, {
-        deltaX: offset.x,
-        deltaY: offset.y,
-      })
+  const offsets = scrollBounds.switchMap(bounds =>
+    lastOffset.take(1).mergeMap(initialOffset => {
+      const moveDeltas = startDeltas
+        .move(window)
+        .withLatestFrom(lastOffset)
+        .switchMap(([moves, offset]) =>
+          moves
+          .momentum()
+          .rect(bounds, Delta.createValue({
+            deltaX: offset.x,
+            deltaY: offset.y,
+          }))
+        )
 
-      // Compute the next offset from the previous one plus a delta.
-      const toNextOffset = ({x, y}, delta) => {
-        // Adjust the delta to our scroll bounds.
-        delta = rect.computeNext(delta)
-        // Update our move function with the adjusted delta.
-        updater.updateFrame(delta)
-        // Round our delta values so we get a pixel-snapped scroll animation.
-        delta.deltaX = Math.round(delta.deltaX)
-        delta.deltaY = Math.round(delta.deltaY)
-        // Update our rect with the final deltas.
-        rect.updateFrame(delta)
-        // Return the next offset.
-        return {
-          x: x + delta.deltaX,
-          y: y + delta.deltaY,
-        }
-      }
-
-      return Rx.Observable
-        .merge(moveDeltas, moveToDeltas)  // Merge our delta streams.
-        .startWith(Delta.createValue())  // Start no delta.
-        .scan(toNextOffset, offset)  // Scan each delta from last offset to next.
-        .do(lastOffset)  // Update the last offset.
+      return Rx.Observable.merge(moveDeltas, moveToDeltas)
+      .startWith(Delta.confineDeltaToRect(bounds, initialOffset))
+      .scan(computeNextOffset, initialOffset)  // Scan each delta from last offset to next.
+      .do(lastOffset)  // Update the last offset.
+      .map(value => ({
+        ...value,
+        x: Math.round(value.x),
+        y: Math.round(value.y),
+      }))
     })
   )
 
