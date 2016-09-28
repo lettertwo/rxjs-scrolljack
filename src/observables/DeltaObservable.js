@@ -160,10 +160,6 @@ export class DeltaObservable extends Observable {
     return new this(target, event)::mapTo(this.createValue(value))
   }
 
-  static move (target, ...args) {
-    return this.create(target)::take(1).move(target, ...args)::exhaust()
-  }
-
   static moveTo (endValue, updater, scheduler) {
     const startValue = this.createValue()
     return new this(DeltaGenerator.create(startValue, endValue, updater, scheduler))
