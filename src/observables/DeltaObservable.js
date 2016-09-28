@@ -162,6 +162,7 @@ export class DeltaObservable extends Observable {
 
   static moveTo (endValue, updater, scheduler) {
     const startValue = this.createValue()
+    endValue = this.createValue(endValue)
     return new this(DeltaGenerator.create(startValue, endValue, updater, scheduler))
   }
 }
