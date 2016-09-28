@@ -129,6 +129,25 @@ export class DeltaObservable extends Observable {
     }
   }
 
+  // FIXME: This isn't an operator, so should it be here?
+  static confineDeltaToRect (bounds, {x = 0, y = 0} = {}, {deltaX = 0, deltaY = 0} = {}) {
+    let minX = bounds.x || 0
+    let maxX = minX + (bounds.width || 0)
+    let minY = bounds.y || 0
+    let maxY = minY + (bounds.height || 0)
+
+    let nx = x + deltaX
+    let ny = y + deltaY
+
+    if (nx < minX) deltaX -= nx - minX
+    else if (nx > maxX) deltaX -= nx - maxX
+
+    if (ny < minY) deltaY -= ny - minY
+    else if (ny > maxY) deltaY -= ny - maxY
+
+    return this.createValue({deltaX, deltaY})
+  }
+
   static create (target) {
     return new this(target)
   }
