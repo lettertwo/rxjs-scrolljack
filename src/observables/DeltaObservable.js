@@ -66,7 +66,7 @@ export class DeltaObservable extends Observable {
   move (root) {
     const nextSource = this.constructor.create(root)
     const stopSource = this.constructor.stop(root)
-    return this.lift(new MoveOperator(nextSource, stopSource))
+    return this.lift(new MoveOperator(this.constructor, nextSource, stopSource))
   }
 
   rect (bounds, initialValue) {

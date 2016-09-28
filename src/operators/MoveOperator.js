@@ -12,15 +12,16 @@ import {first} from 'rxjs/operator/first'
  */
 
 export class MoveSubscriber extends Subscriber {
-  constructor (destination, nextSource, stopSource) {
+  constructor (destination, DeltaObservable, nextSource, stopSource) {
     super(destination)
+    this.DeltaObservable = DeltaObservable
     this.nextSource = nextSource
     this.stopSource = stopSource
   }
 
   _next (starts) {
     // Start with next and stop sources for our move operation.
-    let {nextSource, stopSource} = this
+    let {DeltaObservable, nextSource, stopSource} = this
 
     stopSource = stopSource.hijack()
       ::filter(createDuplicateFilter())
@@ -33,12 +34,15 @@ export class MoveSubscriber extends Subscriber {
     // Emit the observable of the move operation.
     // The observerable emits values from the start source until
     // our stop source emits, then emits the stop source value.
-    return super._next(merge(nextSource, stopSource::first()))
+    return super._next(
+      DeltaObservable.create(merge(nextSource, stopSource::first()))
+    )
   }
 }
 
 export class MoveOperator {
-  constructor (nextSource, stopSource) {
+  constructor (DeltaObservable, nextSource, stopSource) {
+    this.DeltaObservable = DeltaObservable
     this.nextSource = nextSource
     this.stopSource = stopSource
   }
@@ -46,6 +50,7 @@ export class MoveOperator {
   call (subscriber, source) {
     return source._subscribe(new MoveSubscriber(
       subscriber,
+      this.DeltaObservable,
       this.nextSource,
       this.stopSource,
     ))
