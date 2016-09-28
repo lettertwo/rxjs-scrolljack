@@ -70,7 +70,12 @@ export class DeltaObservable extends Observable {
     return this.lift(new MoveOperator(this.constructor, nextSource, stopSource))
   }
 
-  rect (bounds, initialValue) {
+  rect (bounds, initialOffset) {
+    let initialValue = {...initialOffset}
+    if (initialOffset.x != null || initialOffset.y != null) {
+      initialValue.deltaX = initialOffset.x
+      initialValue.deltaY = initialOffset.y
+    }
     initialValue = this.constructor.createValue(initialValue)
     return this.lift(new RectOperator(bounds, initialValue))
   }
