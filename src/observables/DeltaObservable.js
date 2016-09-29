@@ -80,8 +80,28 @@ export class DeltaObservable extends Observable {
     return this.lift(new RectOperator(bounds, initialValue))
   }
 
-  momentum (opts, scheduler) {
-    return this.lift(new MomentumOperator(opts, scheduler))
+  momentum (optsOrInitialValue, initialValueOrScheduler, scheduler) {
+    let opts = optsOrInitialValue
+    let initialValue = initialValueOrScheduler
+
+    if (opts && typeof opts.schedule === 'function') {
+      scheduler = opts
+      opts = null
+      initialValue = null
+    } else if (opts && (opts.deltaX != null || opts.deltaY != null)) {
+      scheduler = initialValue
+      initialValue = opts
+      opts = null
+    } else if (initialValue && typeof initialValue.schedule === 'function') {
+      scheduler = initialValue
+      initialValue = null
+    }
+
+    if (initialValue) {
+      initialValue = this.constructor.createValue(initialValue)
+    }
+
+    return this.lift(new MomentumOperator(opts, initialValue, scheduler))
   }
 
   anchor (optsOrInitialValue, initialValueOrScheduler, scheduler) {

@@ -1,18 +1,21 @@
+import $$observable from 'symbol-observable'
 import {Subscriber} from 'rxjs/Subscriber'
 import {DeltaGenerator} from '../observables/DeltaGenerator'
 import {momentum} from '../updaters/momentum'
 
 export class MomentumOperator {
-  constructor (opts, scheduler) {
+  constructor (opts, initialValue, scheduler) {
     this.opts = opts
+    this.initialValue = initialValue
     this.scheduler = scheduler
   }
 
   call (subscriber, source) {
-    const {opts, scheduler} = this
+    const {opts, initialValue, scheduler} = this
     return source._subscribe(new MomentumSubscriber(
       subscriber,
       opts,
+      initialValue,
       scheduler,
     ))
   }
@@ -21,19 +24,24 @@ export class MomentumOperator {
 export default MomentumOperator
 
 export class MomentumSubscriber extends Subscriber {
-  constructor (destination, opts, scheduler) {
+  constructor (destination, opts, initialValue, scheduler) {
     super(destination)
     this.updater = momentum(opts)
     this.scheduler = scheduler
+    this.initialValue = initialValue
   }
 
   _next (value) {
     this.lastValue = value
     if (this.updater.stopped) {
+      if (this.initialValue) value = this.initialValue
       this.updater.start(value)
     } else {
+      value = this.updater.computeNext(value)
       this.updater.updateFrame(value)
     }
+
+    this.lastValue = value
     super._next(value)
   }
 

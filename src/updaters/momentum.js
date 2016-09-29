@@ -8,27 +8,20 @@ class MomentumUpdater extends KinematicUpdater {
     spring.lastDelta = 0
   }
 
-  _startSpring (spring) {
-    // Reset net delta on start.
-    spring.lastDelta = 0
-  }
-
   _updateFrameSpring (value, spring) {
-    if (this.stopped) {
-      spring.lastDelta = spring.toDelta(value)
-    }
+    spring.lastDelta = spring.toDelta(value)
     spring.velocity = spring.toVelocity(value)
   }
 
   _computeNext (value) {
-    if (!value.deltaT && !value.deltaX && !value.deltaY) return value
-    return super._computeNext(value)
+    if (!this.stopped || !value.deltaT && !value.deltaX && !value.deltaY) {
+      return value
+    } else {
+      return super._computeNext(value)
+    }
   }
 
   _computeNextSpring (value, spring) {
-    // If we haven't stopped, just pass the value through.
-    if (!this.stopped) return value
-
     const t = value.deltaT / 1000
     let {lastDelta, velocity, stiffness: K, damping: B, precision: P} = spring
 
