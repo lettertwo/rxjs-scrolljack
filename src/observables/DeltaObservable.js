@@ -4,7 +4,6 @@ import {mapTo} from 'rxjs/operator/mapTo'
 import {DeltaGenerator} from './DeltaGenerator'
 import {HijackableEventObservable} from './HijackableEventObservable'
 import {DeltaOperator} from '../operators/DeltaOperator'
-import {MoveOperator} from '../operators/MoveOperator'
 import {RectOperator} from '../operators/RectOperator'
 import {MomentumOperator} from '../operators/MomentumOperator'
 import {AnchorOperator} from '../operators/AnchorOperator'
@@ -60,12 +59,6 @@ export class DeltaObservable extends Observable {
 
   hijack (predicate) {
     return this.lift(new HijackOperator(predicate))
-  }
-
-  move (root) {
-    const nextSource = this.constructor.create(root)
-    const stopSource = this.constructor.stop(root)
-    return this.lift(new MoveOperator(this.constructor, nextSource, stopSource))
   }
 
   rect (bounds, initialOffset) {
@@ -176,6 +169,10 @@ export class DeltaObservable extends Observable {
 
   static stop (target, event, value) {
     return new this(target, event)::mapTo(this.createValue(value))
+  }
+
+  static move (target) {
+    return new this(target)
   }
 
   static moveTo (endValue, updater, scheduler) {
