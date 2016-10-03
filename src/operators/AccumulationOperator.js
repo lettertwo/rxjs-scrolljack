@@ -2,7 +2,6 @@ import {Subscriber} from 'rxjs/Subscriber'
 
 const add = (a, b) => parseFloat(a, 10) + parseFloat(b, 10)
 
-
 export class AccumulationOperator {
   constructor (initialValue) {
     this.initialValue = initialValue
