@@ -27,7 +27,7 @@ export class DeltaGenerator extends Observable {
       })
     }
 
-    return DeltaGenerator.from(startValue, updater, scheduler)
+    return DeltaGenerator.from(updater, scheduler, startValue)
       ._subscribe(subscriber)
   }
 
@@ -35,9 +35,9 @@ export class DeltaGenerator extends Observable {
     return new DeltaGenerator(startValue, endValue, updater, scheduler)
   }
 
-  static from (initialValue, updater = anchor, scheduler = animationFrame) {
+  static from (updater = anchor, scheduler = animationFrame, initialValue) {
     return from(
-      createDeltaGenerator(scheduler, updater, initialValue, scheduler.now()),
+      createDeltaGenerator(scheduler, updater, scheduler.now(), initialValue),
       scheduler,
     )
   }
@@ -47,7 +47,7 @@ export default DeltaGenerator
 
 const F = 1000 / 60  // Default frame rate
 
-function * createDeltaGenerator (scheduler, updater, lastValue, time) {
+function * createDeltaGenerator (scheduler, updater, time, lastValue = {}) {
   while (updater.shouldGenerateNext()) {
     let {
       deltaX = 0,

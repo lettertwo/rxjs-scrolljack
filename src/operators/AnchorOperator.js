@@ -36,22 +36,21 @@ export class AnchorSubscriber extends Subscriber {
 
   _next (value) {
     if (this.updater.stopped) {
-    } else {
-      value = this.updater.computeNext(value)
-      this.updater.updateFrame(value)
       this.updater.start()
     }
-    this.lastValue = value
+
+    value = this.updater.computeNext(value)
+    this.updater.updateFrame(value)
     super._next(value)
   }
 
   _complete () {
-    const {destination: subscriber, lastValue, updater, scheduler} = this
+    const {destination: subscriber, updater, scheduler} = this
 
     updater.stop()
 
     this.add(DeltaGenerator
-      .from(lastValue, updater, scheduler)
+      .from(updater, scheduler)
       .subscribe({
         next: value => { subscriber.next(value) },
         complete: () => { super._complete() },
