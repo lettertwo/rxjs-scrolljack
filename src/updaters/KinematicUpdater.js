@@ -1,4 +1,5 @@
 import Updater from './Updater'
+import {hasDelta} from '../utils'
 
 export class KinematicUpdater extends Updater {
   _init (springs = [], ...args) {
@@ -43,14 +44,14 @@ export class KinematicUpdater extends Updater {
   }
 
   _updateFrame (value) {
-    if (!value.deltaT && !value.deltaX && !value.deltaY) return
+    if (!hasDelta(value)) return
     for (const spring of this.springs) {
       this._updateFrameSpring(value, spring)
     }
   }
 
   _catchFrame (value) {
-    if (!value.deltaT && !value.deltaX && !value.deltaY) return
+    if (!hasDelta(value)) return
     for (const spring of this.springs) {
       this._catchFrameSpring(value, spring)
     }

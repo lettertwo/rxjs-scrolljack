@@ -13,3 +13,7 @@ export const createWheelEventFrom = (value, type) => {
 
 export const inside = (w, h, dx, dy) => w * h > dx ** 2 + dy ** 2
 export const outside = (w, h, dx, dy) => w * h < dx ** 2 + dy ** 2
+
+export const hasDelta = value => Boolean(
+  value && (value.deltaT || value.deltaX || value.deltaY)
+)

@@ -1,6 +1,7 @@
 import {Subscriber} from 'rxjs/Subscriber'
 import {DeltaGenerator} from '../observables/DeltaGenerator'
 import {anchor} from '../updaters/anchor'
+import {hasDelta} from '../utils'
 
 export class AnchorOperator {
   constructor (opts, initialValue, scheduler) {
@@ -27,7 +28,8 @@ export class AnchorSubscriber extends Subscriber {
     super(destination)
     this.updater = anchor(opts)
     this.scheduler = scheduler
-    if (initialValue) {
+
+    if (initialValue && hasDelta(initialValue)) {
       this.updater.updateFrame(initialValue)
     }
   }

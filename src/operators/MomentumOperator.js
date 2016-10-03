@@ -2,6 +2,7 @@ import $$observable from 'symbol-observable'
 import {Subscriber} from 'rxjs/Subscriber'
 import {DeltaGenerator} from '../observables/DeltaGenerator'
 import {momentum} from '../updaters/momentum'
+import {hasDelta} from '../utils'
 
 export class MomentumOperator {
   constructor (opts, initialValue, scheduler) {
@@ -28,7 +29,9 @@ export class MomentumSubscriber extends Subscriber {
     super(destination)
     this.updater = momentum(opts)
     this.scheduler = scheduler
-    this.initialValue = initialValue
+    if (initialValue && hasDelta(initialValue)) {
+      this.updater.updateFrame(initialValue)
+    }
   }
 
   _next (value) {
