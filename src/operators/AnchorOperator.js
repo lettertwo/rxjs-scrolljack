@@ -1,5 +1,5 @@
 import {Subscriber} from 'rxjs/Subscriber'
-import {DeltaGenerator} from '../observables/DeltaGenerator'
+import {DeltaGeneratorObservable} from '../observables/DeltaGeneratorObservable'
 import {anchor} from '../updaters/anchor'
 import {hasDelta} from '../utils'
 
@@ -49,7 +49,7 @@ export class AnchorSubscriber extends Subscriber {
 
     updater.stop()
 
-    this.add(DeltaGenerator
+    this.add(DeltaGeneratorObservable
       .from(updater, scheduler)
       .subscribe({
         next: value => { subscriber.next(value) },

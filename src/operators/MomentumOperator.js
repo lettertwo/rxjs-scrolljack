@@ -1,6 +1,6 @@
 import $$observable from 'symbol-observable'
 import {Subscriber} from 'rxjs/Subscriber'
-import {DeltaGenerator} from '../observables/DeltaGenerator'
+import {DeltaGeneratorObservable} from '../observables/DeltaGeneratorObservable'
 import {momentum} from '../updaters/momentum'
 import {hasDelta} from '../utils'
 
@@ -49,7 +49,7 @@ export class MomentumSubscriber extends Subscriber {
 
     updater.stop()
 
-    this.add(DeltaGenerator
+    this.add(DeltaGeneratorObservable
       .from(updater, scheduler)
       .subscribe({
         next: value => { subscriber.next(value) },

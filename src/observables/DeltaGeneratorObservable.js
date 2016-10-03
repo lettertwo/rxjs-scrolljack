@@ -3,7 +3,7 @@ import {from} from 'rxjs/observable/from'
 import {animationFrame} from 'rxjs/scheduler/animationFrame'
 import {anchor} from '../updaters/anchor'
 
-export class DeltaGenerator extends Observable {
+export class DeltaGeneratorObservable extends Observable {
   constructor (startValue, endValue, updater, scheduler) {
     super()
     this.startValue = startValue
@@ -27,12 +27,12 @@ export class DeltaGenerator extends Observable {
       })
     }
 
-    return DeltaGenerator.from(updater, scheduler, startValue)
+    return DeltaGeneratorObservable.from(updater, scheduler, startValue)
       ._subscribe(subscriber)
   }
 
   static create (startValue, endValue, updater = anchor, scheduler = animationFrame) {
-    return new DeltaGenerator(startValue, endValue, updater, scheduler)
+    return new DeltaGeneratorObservable(startValue, endValue, updater, scheduler)
   }
 
   static from (updater = anchor, scheduler = animationFrame, initialValue) {
@@ -43,7 +43,7 @@ export class DeltaGenerator extends Observable {
   }
 }
 
-export default DeltaGenerator
+export default DeltaGeneratorObservable
 
 const F = 1000 / 60  // Default frame rate
 

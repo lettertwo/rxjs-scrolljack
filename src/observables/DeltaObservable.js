@@ -1,7 +1,7 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
 import {mapTo} from 'rxjs/operator/mapTo'
-import {DeltaGenerator} from './DeltaGenerator'
+import {DeltaGeneratorObservable} from './DeltaGeneratorObservable'
 import {HijackableEventObservable} from './HijackableEventObservable'
 import {DeltaOperator} from '../operators/DeltaOperator'
 import {RectOperator} from '../operators/RectOperator'
@@ -178,7 +178,7 @@ export class DeltaObservable extends Observable {
   static moveTo (endValue, updater, scheduler) {
     const startValue = this.createValue()
     endValue = this.createValue(endValue)
-    return new this(DeltaGenerator.create(startValue, endValue, updater, scheduler))
+    return new this(DeltaGeneratorObservable.create(startValue, endValue, updater, scheduler))
   }
 }
 
