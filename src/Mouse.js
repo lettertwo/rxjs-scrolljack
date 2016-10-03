@@ -17,7 +17,7 @@ export class Mouse extends DeltaObservable {
       .start(target, MOUSE_DOWN)
       .hijack()
       ::mergeMap(offset => super
-        .create(target)
+        .from(target)
         .hijack()
         .accumulate()
         ::takeUntil(this.stop(target))

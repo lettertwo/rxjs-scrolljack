@@ -112,7 +112,7 @@ export class DeltaObservable extends Observable {
     return {deltaT, deltaX, deltaY, velocityX, velocityY}
   }
 
-  static create (target) {
+  static from (target) {
     return new this(target)
   }
 

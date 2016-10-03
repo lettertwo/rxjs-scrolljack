@@ -9,19 +9,19 @@ export const combine = (...DeltaClasses) => {
         super(target)
       } else {
         super(merge(...DeltaClasses.map(DeltaClass => (
-          DeltaClass.create(target)
+          DeltaClass.from(target)
         ))))
       }
     }
 
     static start (target) {
-      return this.create(merge(...DeltaClasses.map(DeltaClass => (
+      return this.from(merge(...DeltaClasses.map(DeltaClass => (
         DeltaClass.start(target)
       ))))
     }
 
     static stop (target) {
-      return this.create(merge(...DeltaClasses.map(DeltaClass => (
+      return this.from(merge(...DeltaClasses.map(DeltaClass => (
         DeltaClass.stop(target)
       ))))
     }

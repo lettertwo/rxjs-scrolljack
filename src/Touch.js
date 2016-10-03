@@ -19,7 +19,7 @@ export class Touch extends DeltaObservable {
       .start(target, TOUCH_START)
       .hijack()
       ::mergeMap(offset => super
-        .create(target)
+        .from(target)
         .hijack()
         .accumulate()
         ::takeUntil(this.stop(target))
