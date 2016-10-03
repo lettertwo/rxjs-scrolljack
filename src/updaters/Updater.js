@@ -8,6 +8,10 @@
 export class Updater {
   constructor (...args) {
     this.stopped = true
+    this.init(...args)
+  }
+
+  init (...args) {
     this._init(...args)
   }
 
