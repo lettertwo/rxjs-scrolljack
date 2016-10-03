@@ -17,20 +17,16 @@ export class Updater {
     return this._clone(updater)
   }
 
-  start (value) {
+  start () {
     this.stopped = false
-    value = this.computeNext(value)
-    this._start(value)
-    this.updateFrame(value)
-    return value
+    this._start()
+    return this.stopped === false
   }
 
-  stop (value) {
+  stop () {
     this.stopped = true
-    value = this.computeNext(value)
-    this._stop(value)
-    this.updateFrame(value)
-    return value
+    this._stop()
+    return this.stopped === true
   }
 
   computeNext (value) {
@@ -53,9 +49,9 @@ export class Updater {
 
   _clone (target) { return target }
 
-  _start (value) { /* noop */ }
+  _start () { /* noop */ }
 
-  _stop (value) { /* noop */ }
+  _stop () { /* noop */ }
 
   _computeNext (value) { return value }
 

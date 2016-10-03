@@ -38,10 +38,10 @@ export class MomentumSubscriber extends Subscriber {
     this.lastValue = value
     if (this.updater.stopped) {
       if (this.initialValue) value = this.initialValue
-      this.updater.start(value)
     } else {
       value = this.updater.computeNext(value)
       this.updater.updateFrame(value)
+      this.updater.start()
     }
 
     this.lastValue = value
@@ -51,7 +51,7 @@ export class MomentumSubscriber extends Subscriber {
   _complete () {
     const {destination: subscriber, lastValue, updater, scheduler} = this
 
-    updater.stop(lastValue)
+    updater.stop()
 
     this.add(DeltaGenerator
       .from(lastValue, updater, scheduler)

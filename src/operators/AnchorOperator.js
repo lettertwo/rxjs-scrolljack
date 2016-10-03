@@ -36,10 +36,10 @@ export class AnchorSubscriber extends Subscriber {
 
   _next (value) {
     if (this.updater.stopped) {
-      this.updater.start(value)
     } else {
       value = this.updater.computeNext(value)
       this.updater.updateFrame(value)
+      this.updater.start()
     }
     this.lastValue = value
     super._next(value)
@@ -48,7 +48,7 @@ export class AnchorSubscriber extends Subscriber {
   _complete () {
     const {destination: subscriber, lastValue, updater, scheduler} = this
 
-    updater.stop(lastValue)
+    updater.stop()
 
     this.add(DeltaGenerator
       .from(lastValue, updater, scheduler)

@@ -17,18 +17,6 @@ export class KinematicUpdater extends Updater {
     return target
   }
 
-  _start (value) {
-    for (const spring of this.springs) {
-      this._startSpring(spring)
-    }
-  }
-
-  _stop (value) {
-    for (const spring of this.springs) {
-      this._stopSpring(spring)
-    }
-  }
-
   _computeNext (value) {
     for (const spring of this.springs) {
       value = this._computeNextSpring(value, spring)
@@ -60,10 +48,6 @@ export class KinematicUpdater extends Updater {
   _initSpring (spring) { /* noop */ }
 
   _cloneSpring (spring) { return {...spring} }
-
-  _startSpring (spring) { /* noop */ }
-
-  _stopSpring (spring) { /* noop */ }
 
   _shouldGenerateNextSpring (spring) { return false }
 
