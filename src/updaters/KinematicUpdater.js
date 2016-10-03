@@ -18,6 +18,7 @@ export class KinematicUpdater extends Updater {
   }
 
   _computeNext (value) {
+    if (!hasDelta(value)) return value
     for (const spring of this.springs) {
       value = this._computeNextSpring(value, spring)
     }

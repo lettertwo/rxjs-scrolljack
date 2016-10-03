@@ -13,15 +13,10 @@ class MomentumUpdater extends KinematicUpdater {
     spring.velocity = spring.toVelocity(value)
   }
 
-  _computeNext (value) {
-    if (!this.stopped || !value.deltaT && !value.deltaX && !value.deltaY) {
-      return value
-    } else {
-      return super._computeNext(value)
-    }
-  }
-
   _computeNextSpring (value, spring) {
+    // If we've not stopped yet, just pass the value through.
+    if (!this.stopped) return value
+
     const t = value.deltaT / 1000
     let {lastDelta, velocity, stiffness: K, damping: B, precision: P} = spring
 
