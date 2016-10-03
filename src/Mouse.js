@@ -5,7 +5,7 @@ import {mergeMap} from 'rxjs/operator/mergeMap'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {DeltaObservable} from './observables/DeltaObservable'
 import {inside} from './utils'
-import {MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, CLICK} from './events'
+import {MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, MOUSE_LEAVE, CLICK} from './events'
 
 export class Mouse extends DeltaObservable {
   constructor (target, event = MOUSE_MOVE) {
@@ -29,6 +29,7 @@ export class Mouse extends DeltaObservable {
   static stop (target) {
     return new this(merge(
       super.stop(target, MOUSE_UP),
+      super.stop(target, MOUSE_LEAVE),
       super.stop(target, CLICK),
     ))
   }
