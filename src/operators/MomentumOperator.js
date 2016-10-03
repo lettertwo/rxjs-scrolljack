@@ -1,4 +1,3 @@
-import $$observable from 'symbol-observable'
 import {Subscriber} from 'rxjs/Subscriber'
 import {DeltaGeneratorObservable} from '../observables/DeltaGeneratorObservable'
 import {momentum} from '../updaters/momentum'

@@ -19,10 +19,6 @@ export class Wheel extends DeltaObservable {
     return super.start(target, WHEEL_START)
   }
 
-  static move (target, updater, scheduler) {
-    return super.move(target, updater, scheduler, target)
-  }
-
   static stop (target) {
     return super.stop(target, WHEEL_END)
   }

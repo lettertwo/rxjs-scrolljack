@@ -18,20 +18,6 @@ const DEFAULT_VALUE = Object.freeze({
   velocityY: 0,
 })
 
-const calculateDeltaX = (start, end) => {
-  if ('deltaX' in end) return end.deltaX
-  start = 'x' in start ? start.x : 0
-  end = 'x' in end ? end.x : 0
-  return end - start
-}
-
-const calculateDeltaY = (start, end) => {
-  if ('deltaY' in end) return end.deltaY
-  start = 'y' in start ? start.y : 0
-  end = 'y' in end ? end.y : 0
-  return end - start
-}
-
 export class DeltaObservable extends Observable {
   constructor (target, event, ...hijackArgs) {
     if (!target) {
@@ -126,39 +112,6 @@ export class DeltaObservable extends Observable {
     return {deltaT, deltaX, deltaY, velocityX, velocityY}
   }
 
-  // FIXME: This isn't an operator, so should it be here?
-  static computeDelta (startValue, endValue, updater) {
-    const value = this.createValue({
-      deltaX: calculateDeltaX(startValue, endValue),
-      deltaY: calculateDeltaY(startValue, endValue),
-    })
-    if (updater) {
-      if (typeof updater === 'function') updater = updater()
-      return updater.computeNext(value)
-    } else {
-      return value
-    }
-  }
-
-  // FIXME: This isn't an operator, so should it be here?
-  static confineDeltaToRect (bounds, {x = 0, y = 0} = {}, {deltaX = 0, deltaY = 0} = {}) {
-    let minX = bounds.x || 0
-    let maxX = minX + (bounds.width || 0)
-    let minY = bounds.y || 0
-    let maxY = minY + (bounds.height || 0)
-
-    let nx = x + deltaX
-    let ny = y + deltaY
-
-    if (nx < minX) deltaX -= nx - minX
-    else if (nx > maxX) deltaX -= nx - maxX
-
-    if (ny < minY) deltaY -= ny - minY
-    else if (ny > maxY) deltaY -= ny - maxY
-
-    return this.createValue({deltaX, deltaY})
-  }
-
   static create (target) {
     return new this(target)
   }
@@ -171,7 +124,7 @@ export class DeltaObservable extends Observable {
     return new this(target, event)::mapTo(this.createValue(value))
   }
 
-  static move (target) {
+  static move (target, event) {
     return new this(target)
   }
 
