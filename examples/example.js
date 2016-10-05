@@ -92,6 +92,17 @@ const computeNextOffset = (lastOffset, delta) => ({
 })
 
 /**
+ * Round a scroll offset to 'snap' it to the nearest pixel.
+ *
+ * @param {Offset} offset - The offset to round.
+ * @returns {Offset} - The rounded offset.
+ */
+const roundOffset = offset => ({
+  x: Math.round(offset.x),
+  y: Math.round(offset.y),
+})
+
+/**
  * Render our example scroll view.
  *
  * @returns {Subscription} - The subscription to scroll behavior.
@@ -166,10 +177,17 @@ function main () {
 
   /**
    * An observable of start deltas.
-   * These represent the start of some scroll input.
+   * These represent the start of scroll input.
    * @type {Observable<Delta>}
    */
   const startDeltas = Delta.start(container)
+
+  /**
+   * An observable of stop deltas.
+   * These represent the stop of scroll input.
+   * @type {Observable<Delta>}
+   */
+  const stopDeltas = Delta.stop(window)
 
   /**
    * Merge input values with the last offset into delta shapes.
@@ -194,11 +212,11 @@ function main () {
     .fromEvent(content, 'click')
     .switchMap(event => lastOffset
       .take(1) // Take the last offset.
-      .mergeMap(offset => Delta  // Emulate scrolling to the click's offset.
-        .moveTo(Delta.createValue({
+      .mergeMap(offset => Delta
+        .moveTo({  // Emulate scrolling to the click's offset.
           deltaX: event.clientX - offset.x,
           deltaY: event.clientY - offset.y,
-        }))
+        })
         .takeUntil(startDeltas)  // Cancel if actual scrolling occurs.
       )
     )
@@ -209,6 +227,21 @@ function main () {
    * @type {Observable<Delta>}
    */
   const moveToDeltas = Rx.Observable.merge(clickDeltas, textDeltas)
+
+  /**
+   * An observable of move deltas.
+   * These represent discrete events of scroll input.
+   * We hijack them to prevent default behavior from occurring.
+   * We stop observing them when we see a stop or start event.
+   * @type {Observable<Delta>}
+   */
+  const moveDeltas = startDeltas.switchMap(() => Delta
+    .move(window)  // Convert events to  movement deltas.
+    .hijack()  // Hijack the events, so their default behavior doesn't occcur.
+    .takeUntil(stopDeltas)  // Stop taking events when a stop event occurs.
+    .momentum()  // Apply decceleration to the end of the movement.
+    .takeUntil(moveToDeltas)  // Stop taking events and momentum when other input occurs.
+  )
 
   /**
    * The valid scroll area as the shape `{width, height}`.
@@ -226,29 +259,13 @@ function main () {
    * @type {Observable<Offset>}
    */
   const offsets = scrollBounds.switchMap(bounds =>
-    lastOffset.take(1).mergeMap(initialOffset => {
-      const moveDeltas = startDeltas
-        .move(window)
-        .withLatestFrom(lastOffset)
-        .switchMap(([moves, offset]) =>
-          moves
-          .momentum()
-          .rect(bounds, Delta.createValue({
-            deltaX: offset.x,
-            deltaY: offset.y,
-          }))
-        )
-
-      return Rx.Observable.merge(moveDeltas, moveToDeltas)
-      .startWith(Delta.confineDeltaToRect(bounds, initialOffset))
-      .scan(computeNextOffset, initialOffset)  // Scan each delta from last offset to next.
-      .do(lastOffset)  // Update the last offset.
-      .map(value => ({
-        ...value,
-        x: Math.round(value.x),
-        y: Math.round(value.y),
-      }))
-    })
+    lastOffset.take(1).mergeMap(initialOffset => Delta
+      .from(Rx.Observable.merge(moveDeltas, moveToDeltas))  // Get deltas from any of our inputs.
+      .rect(bounds, initialOffset)  // Confine each move to our scrollable area.
+      .scan(computeNextOffset, initialOffset)  // Accumulate deltas and convert to offsets.
+      .do(lastOffset)  // Keep track of the last offset.
+      .map(roundOffset)  // 'Snap' the offset to the nearest pixel.
+    )
   )
 
   /**
@@ -256,10 +273,7 @@ function main () {
    * @type {Observable<boolean>}
    */
   const scrolling = Rx.Observable
-    .merge(
-      startDeltas.mapTo(true),
-      Delta.stop(window).mapTo(false),
-    )
+    .merge(startDeltas.mapTo(true), stopDeltas.mapTo(false))
     .startWith(false)
 
   // Combine the scrolling state with the scroll offset to render the view.
