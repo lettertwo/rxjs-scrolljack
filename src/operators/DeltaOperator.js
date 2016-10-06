@@ -94,12 +94,15 @@ export class DeltaSubscriber extends Subscriber {
 }
 
 export class DeltaOperator {
-  constructor (computeDelta) {
+  constructor (computeDelta, computeVelocity) {
     this.computeDelta = computeDelta
+    this.computeVelocity = computeVelocity
   }
 
   call (subscriber, source) {
-    return source._subscribe(new DeltaSubscriber(subscriber, this.computeDelta))
+    return source._subscribe(
+      new DeltaSubscriber(subscriber, this.computeDelta, this.computeVelocity)
+    )
   }
 }
 
