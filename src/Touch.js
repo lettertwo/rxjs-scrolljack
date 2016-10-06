@@ -11,7 +11,7 @@ const excludeMultiTouch = e => e.touches.length <= 1
 
 export class Touch extends DeltaObservable {
   constructor (target, event = TOUCH_MOVE) {
-    super(target, event, excludeMultiTouch)
+    super(target, event, excludeMultiTouch, computeTouchDelta, computeTouchVelocity)
   }
 
   static start (target, radius = {w: 10, h: 10}) {
@@ -37,3 +37,28 @@ export class Touch extends DeltaObservable {
 }
 
 export default Touch
+
+const computeTouchDelta = (event, lastEvent) => {
+  let deltaX = 0
+  let deltaY = 0
+  if (lastEvent && lastEvent.touches && lastEvent.touches.length) {
+    const {clientX: prevX, clientY: prevY} = lastEvent.touches[0]
+    const {clientX, clientY} = event.touches[0]
+    deltaX = prevX - clientX
+    deltaY = prevY - clientY
+  }
+  return {deltaX, deltaY}
+}
+
+const computeTouchVelocity = (event, lastEvent, deltaT) => {
+  let velocityX = 0
+  let velocityY = 0
+  if (lastEvent && lastEvent.touches && lastEvent.touches.length) {
+    const t = deltaT / 1000
+    const {clientX: prevX, clientY: prevY} = lastEvent.touches[0]
+    const {clientX, clientY} = event.touches[0]
+    velocityX = (prevX - clientX) / t
+    velocityY = (prevY - clientY) / t
+  }
+  return {velocityX, velocityY}
+}

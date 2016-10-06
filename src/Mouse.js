@@ -9,7 +9,7 @@ import {MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, MOUSE_LEAVE, CLICK} from './events'
 
 export class Mouse extends DeltaObservable {
   constructor (target, event = MOUSE_MOVE) {
-    super(target, event)
+    super(target, event, null, computeMouseDelta, computeMouseVelocity)
   }
 
   static start (target, radius = {w: 10, h: 10}) {
@@ -36,3 +36,28 @@ export class Mouse extends DeltaObservable {
 }
 
 export default Mouse
+
+const computeMouseDelta = (event, lastEvent) => {
+  let deltaX = 0
+  let deltaY = 0
+  if (lastEvent) {
+    const {clientX: prevX, clientY: prevY} = lastEvent
+    const {clientX, clientY} = event
+    deltaX = prevX - clientX
+    deltaY = prevY - clientY
+  }
+  return {deltaX, deltaY}
+}
+
+const computeMouseVelocity = (event, lastEvent, deltaT) => {
+  let velocityX = 0
+  let velocityY = 0
+  if (deltaT && lastEvent) {
+    const t = deltaT / 1000
+    const {clientX: prevX, clientY: prevY} = lastEvent
+    const {clientX, clientY} = event
+    velocityX = (prevX - clientX) / t
+    velocityY = (prevY - clientY) / t
+  }
+  return {velocityX, velocityY}
+}
