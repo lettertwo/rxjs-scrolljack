@@ -125,7 +125,7 @@ export class DeltaObservable extends Observable {
   }
 
   static move (target, event) {
-    return new this(target)
+    return new this(target, event)
   }
 
   static moveTo (endValue, updater, scheduler) {
