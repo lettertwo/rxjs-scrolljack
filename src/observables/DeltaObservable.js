@@ -19,7 +19,7 @@ const DEFAULT_VALUE = Object.freeze({
 })
 
 export class DeltaObservable extends Observable {
-  constructor (target, event, ...hijackArgs) {
+  constructor (target, event, predicate, computeDelta, computeVelocity) {
     if (!target) {
       super()
     } else if (typeof target[$$observable] === 'function') {
@@ -27,8 +27,8 @@ export class DeltaObservable extends Observable {
       this.source = target[$$observable]()
     } else {
       super()
-      this.source = HijackableEventObservable.create(target, event, ...hijackArgs)
-      this.source.operator = new DeltaOperator()
+      this.source = HijackableEventObservable.create(target, event, predicate)
+      this.source.operator = new DeltaOperator(computeDelta, computeVelocity)
     }
   }
 
