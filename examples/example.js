@@ -1,5 +1,5 @@
 import Rx from 'rxjs'
-import {Wheel, Mouse, Touch, Scrolljack} from 'rxjs-scrolljack'
+import Scrolljack, {Wheel, Mouse, Touch} from 'rxjs-scrolljack'
 
 /**
  * @typedef Delta
