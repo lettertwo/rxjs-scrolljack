@@ -1,5 +1,5 @@
 import Rx from 'rxjs'
-import {Wheel, Mouse, Touch, combine} from 'rxjs-scrolljack'
+import {Wheel, Mouse, Touch, Scrolljack} from 'rxjs-scrolljack'
 
 /**
  * @typedef Delta
@@ -26,10 +26,9 @@ import {Wheel, Mouse, Touch, combine} from 'rxjs-scrolljack'
  */
 
 /**
- * Create an Observable class that combines values
- * from the specified Observable classes.
+ * A list of Observable classes that will be used as scroll input.
  */
-const Delta = combine(Wheel, Mouse, Touch)
+const inputs = [Wheel, Mouse, Touch]
 
 /**
  * Parse an integer from a value.
@@ -180,14 +179,14 @@ function main () {
    * These represent the start of scroll input.
    * @type {Observable<Delta>}
    */
-  const startDeltas = Delta.start(container)
+  const startDeltas = Scrolljack.start(container, ...inputs)
 
   /**
    * An observable of stop deltas.
    * These represent the stop of scroll input.
    * @type {Observable<Delta>}
    */
-  const stopDeltas = Delta.stop(window)
+  const stopDeltas = Scrolljack.stop(window, ...inputs)
 
   /**
    * Merge input values with the last offset into delta shapes.
@@ -197,10 +196,10 @@ function main () {
    */
   const textDeltas = Rx.Observable.merge(
     valueFromInput(inputX).withLatestFrom(lastOffset, (newX, {x: oldX}) =>
-      Delta.createValue({deltaX: newX - oldX})
+      Scrolljack.createValue({deltaX: newX - oldX})
     ),
     valueFromInput(inputY).withLatestFrom(lastOffset, (newY, {y: oldY}) =>
-      Delta.createValue({deltaY: newY - oldY})
+      Scrolljack.createValue({deltaY: newY - oldY})
     ),
   )
 
@@ -212,7 +211,7 @@ function main () {
     .fromEvent(content, 'click')
     .switchMap(event => lastOffset
       .take(1) // Take the last offset.
-      .mergeMap(offset => Delta
+      .mergeMap(offset => Scrolljack
         .moveTo({  // Emulate scrolling to the click's offset.
           deltaX: event.clientX - offset.x,
           deltaY: event.clientY - offset.y,
@@ -235,8 +234,8 @@ function main () {
    * We stop observing them when we see a stop or start event.
    * @type {Observable<Delta>}
    */
-  const moveDeltas = startDeltas.switchMap(() => Delta
-    .move(window)  // Convert events to  movement deltas.
+  const moveDeltas = startDeltas.switchMap(() => Scrolljack
+    .move(window, ...inputs)  // Convert events to  movement deltas.
     .hijack()  // Hijack the events, so their default behavior doesn't occcur.
     .takeUntil(stopDeltas)  // Stop taking events when a stop event occurs.
     .momentum()  // Apply decceleration to the end of the movement.
@@ -259,7 +258,7 @@ function main () {
    * @type {Observable<Offset>}
    */
   const offsets = scrollBounds.switchMap(bounds =>
-    lastOffset.take(1).mergeMap(initialOffset => Delta
+    lastOffset.take(1).mergeMap(initialOffset => Scrolljack
       .from(Rx.Observable.merge(moveDeltas, moveToDeltas))  // Get deltas from any of our inputs.
       .rect(bounds, initialOffset)  // Confine each move to our scrollable area.
       .scan(computeNextOffset, initialOffset)  // Accumulate deltas and convert to offsets.
