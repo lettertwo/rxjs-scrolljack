@@ -1,79 +1,96 @@
 import $$observable from 'symbol-observable'
-import {Observable} from 'rxjs/Observable'
-import {takeUntil} from 'rxjs/operator/takeUntil'
-import {fromHijackableEvent} from './observables/fromHijackableEvent'
+import {DeltaObservable} from './observables/DeltaObservable'
 import {DeltaOperator} from './operators/DeltaOperator'
-import {KEY_START, KEY_MOVE, KEY_STOP} from './events'
+import {EmulatedKeyboardEventObservable} from './observables/EmulatedKeyboardEventObservable'
+import {KEY_START, KEY_MOVE, KEY_END} from './events'
 
-const KEY_CODES = [
-  32,  // spacebar
-  33,  // pageup
-  34,  // pagedown
-  35,  // end
-  36,  // home
-  37,  // left
-  38,  // up
-  39,  // right
-  40,  // down
-]
-const SCROLL_DELTA = 20
-
-const keyCodeToScrollDelta = ({keyCode}) => {
-  switch (keyCode) {
-    case 33:  // pageup
-    case 36:  // home
-    case 38:  // up
-      return {deltaX: 0, deltaY: -SCROLL_DELTA}
-    case 32:  // spacebar
-    case 34:  // pagedown
-    case 35:  // end
-    case 40:  // down
-      return {deltaX: 0, deltaY: SCROLL_DELTA}
-    case 37:  // left
-      return {deltaX: -SCROLL_DELTA, deltaY: 0}
-    case 39:  // right
-      return {deltaX: SCROLL_DELTA, deltaY: 0}
-  }
-}
-
-const includeUnmodifiedKeys = (...codes) => e => {
-  const modified = e.ctrlKey || e.shiftKey || e.altKey
-  return !modified && codes.includes(e.keyCode)
-}
-
-export class Keyboard extends Observable {
+export class Keyboard extends DeltaObservable {
   constructor (target, event = KEY_MOVE) {
     if (typeof target[$$observable] === 'function') {
-      super()
-      this.source = target[$$observable]()
+      super(target)
     } else {
-      super()
-      this.source = fromHijackableEvent(target, event, includeUnmodifiedKeys(...KEY_CODES))
-      this.source.operator = new DeltaOperator(keyCodeToScrollDelta)
+      const source = EmulatedKeyboardEventObservable.create(target, event, ignoreUnmappedKeys)
+      source.operator = new DeltaOperator(keyCodeToScrollDelta, keyCodeToScrollVelocity)
+      super(source)
     }
   }
 
-  lift (operator) {
-    const observable = new this.constructor(this)
-    observable.operator = operator
-    return observable
-  }
-
-  static from (target) {
-    return new Keyboard(target)::takeUntil(Keyboard.stop(target))
-  }
-
   static start (target) {
-    return new Keyboard(target, KEY_START)
-  }
-
-  static move (target) {
-    return new Keyboard(target)
+    return super.start(target, KEY_START)
   }
 
   static stop (target) {
-    return new Keyboard(target, KEY_STOP)
+    return super.stop(target, KEY_END)
   }
 }
 
 export default Keyboard
+
+const SCROLL_DELTA = 20
+
+const CODES = [
+  'Space',
+  'PageUp',
+  'PageDown',
+  'End',
+  'Home',
+  'ArrowLeft',
+  'ArrowUp',
+  'ArrowRight',
+  'ArrowDown',
+]
+
+const KEY_CODES_2_CODES = {
+  32: 'Space',
+  33: 'PageUp',
+  34: 'PageDown',
+  35: 'End',
+  36: 'Home',
+  37: 'ArrowLeft',
+  38: 'ArrowUp',
+  39: 'ArrowRight',
+  40: 'ArrowDown',
+}
+
+const keyCodeToScrollVelocity = (event, lastEvent, deltaT) => {
+  let velocityX
+  let velocityY
+
+  if (!lastEvent) {
+    velocityX = 0
+    velocityY = 0
+  } else {
+    const {deltaX, deltaY} = keyCodeToScrollDelta(event)
+    const t = deltaT / 1000
+    velocityX = deltaX / t
+    velocityY = deltaY / t
+  }
+
+  return {velocityX, velocityY}
+}
+
+const keyCodeToScrollDelta = ({code, keyCode}) => {
+  if (!code) code = KEY_CODES_2_CODES[keyCode]
+  switch (code) {
+    case 'PageUp':
+    case 'Home':
+    case 'ArrowUp':
+      return {deltaX: 0, deltaY: -SCROLL_DELTA}
+    case 'Space':
+    case 'PageDown':
+    case 'End':
+    case 'ArrowDown':
+      return {deltaX: 0, deltaY: SCROLL_DELTA}
+    case 'ArrowLeft':
+      return {deltaX: -SCROLL_DELTA, deltaY: 0}
+    case 'ArrowRight':
+      return {deltaX: SCROLL_DELTA, deltaY: 0}
+  }
+}
+
+const ignoreUnmappedKeys = ({code, keyCode, ctrlKey, shiftKey, altKey, metaKey}) => {
+  if (ctrlKey || shiftKey || altKey || metaKey) return false
+  if (!code) code = KEY_CODES_2_CODES[keyCode]
+  if (!CODES.includes(code)) return false
+  return true
+}

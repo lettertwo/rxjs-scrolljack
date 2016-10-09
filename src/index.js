@@ -1,4 +1,5 @@
 export {Touch} from './Touch'
 export {Mouse} from './Mouse'
 export {Wheel} from './Wheel'
+export {Keyboard} from './Keyboard'
 export {Scrolljack, default} from './Scrolljack'
