@@ -1,5 +1,4 @@
-/* global WheelEvent */
-
+/* global Event */
 export const timeStamp = e => e.timeStamp ? parseInt(e.timeStamp, 10) : Date.now()
 
 export const getRoot = () => (
@@ -8,28 +7,12 @@ export const getRoot = () => (
       ? global : document : window
 )
 
-export const createWheelEventFrom = (value, type) => {
-  if (supportsNewEvent()) {
-    return new WheelEvent(type, value)
-  } else {
-    return createOldWheelEventFrom(value, type)
-  }
-}
-
-const createOldWheelEventFrom = (value, type) => {
-  const {view, detail, screenX, screenY, clientX, clientY, button, relatedTarget, deltaX, deltaY, deltaZ, deltaMode} = value
-  const initArgs = [view, detail, screenX, screenY, clientX, clientY, button, relatedTarget, null, deltaX, deltaY, deltaZ, deltaMode]
-  const event = document.createEvent('WheelEvent')
-  event.initWheelEvent(type, true, true, ...initArgs)
-  return event
-}
-
 let __supportsNewEvent = null
 
-const supportsNewEvent = () => {
+export const supportsNewEvent = () => {
   if (__supportsNewEvent === null) {
     try {
-      new WheelEvent('test')  // eslint-disable-line no-new
+      new Event('test')  // eslint-disable-line no-new
       __supportsNewEvent = true
     } catch (e) {
       __supportsNewEvent = false

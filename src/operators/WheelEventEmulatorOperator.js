@@ -1,6 +1,7 @@
+/* global WheelEvent */
 import {Subscriber} from 'rxjs/Subscriber'
 import {async} from 'rxjs/scheduler/async'
-import {timeStamp, createWheelEventFrom} from '../utils'
+import {timeStamp, supportsNewEvent} from '../utils'
 import {WHEEL_START, WHEEL_MOVE, WHEEL_END} from '../events'
 
 const SCROLL_STOP_DELAY = 60
@@ -130,4 +131,20 @@ class WheelEventEmulatorSubcriber extends Subscriber {
   dispatch (value) {
     super._next(value)
   }
+}
+
+const createWheelEventFrom = (value, type) => {
+  if (supportsNewEvent()) {
+    return new WheelEvent(type, value)
+  } else {
+    return createOldWheelEventFrom(value, type)
+  }
+}
+
+const createOldWheelEventFrom = (value, type) => {
+  const {view, detail, screenX, screenY, clientX, clientY, button, relatedTarget, deltaX, deltaY, deltaZ, deltaMode} = value
+  const initArgs = [view, detail, screenX, screenY, clientX, clientY, button, relatedTarget, null, deltaX, deltaY, deltaZ, deltaMode]
+  const event = document.createEvent('WheelEvent')
+  event.initWheelEvent(type, true, true, ...initArgs)
+  return event
 }
