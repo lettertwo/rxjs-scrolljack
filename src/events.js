@@ -18,7 +18,7 @@ export const KEY_UP = 'keyup'
 // Synthetic Keyboard Events
 export const KEY_START = 'keystart'
 export const KEY_MOVE = 'keymove'
-export const KEY_STOP = 'keystop'
+export const KEY_END = 'keyend'
 
 // Wheel Events
 export const WHEEL = 'wheel'
