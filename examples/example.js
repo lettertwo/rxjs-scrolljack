@@ -1,5 +1,5 @@
 import Rx from 'rxjs'
-import Scrolljack, {Wheel, Mouse, Touch} from 'rxjs-scrolljack'
+import Scrolljack, {Wheel, Mouse, Touch, Keyboard} from 'rxjs-scrolljack'
 
 /**
  * @typedef Delta
@@ -28,7 +28,7 @@ import Scrolljack, {Wheel, Mouse, Touch} from 'rxjs-scrolljack'
 /**
  * A list of Observable classes that will be used as scroll input.
  */
-const inputs = [Wheel, Mouse, Touch]
+const inputs = [Wheel, Mouse, Touch, Keyboard]
 
 /**
  * Parse an integer from a value.
