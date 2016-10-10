@@ -26,7 +26,8 @@ export class Keyboard extends DeltaObservable {
 
 export default Keyboard
 
-const SCROLL_DELTA = 20
+const LINE_DELTA = 40
+const PAGE_DELTA = 583
 
 const CODES = [
   'Space',
@@ -74,17 +75,19 @@ const keyCodeToScrollDelta = ({code, keyCode}) => {
   switch (code) {
     case 'PageUp':
     case 'Home':
-    case 'ArrowUp':
-      return {deltaX: 0, deltaY: -SCROLL_DELTA}
+      return {deltaX: 0, deltaY: -PAGE_DELTA}
     case 'Space':
     case 'PageDown':
     case 'End':
+      return {deltaX: 0, deltaY: PAGE_DELTA}
+    case 'ArrowUp':
+      return {deltaX: 0, deltaY: -LINE_DELTA}
     case 'ArrowDown':
-      return {deltaX: 0, deltaY: SCROLL_DELTA}
+      return {deltaX: 0, deltaY: LINE_DELTA}
     case 'ArrowLeft':
-      return {deltaX: -SCROLL_DELTA, deltaY: 0}
+      return {deltaX: -LINE_DELTA, deltaY: 0}
     case 'ArrowRight':
-      return {deltaX: SCROLL_DELTA, deltaY: 0}
+      return {deltaX: LINE_DELTA, deltaY: 0}
   }
 }
 
