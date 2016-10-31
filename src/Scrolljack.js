@@ -1,4 +1,6 @@
 import {mergeStatic as merge} from 'rxjs/operator/merge'
+import {map} from 'rxjs/operator/map'
+import {takeUntil} from 'rxjs/operator/takeUntil'
 import {DeltaObservable} from './observables/DeltaObservable'
 
 export class Scrolljack extends DeltaObservable {
@@ -16,9 +18,14 @@ export class Scrolljack extends DeltaObservable {
     ))
   }
 
-  static move (target, ...DeltaObservableClasses) {
+  static move (target, root, ...DeltaObservableClasses) {
     return this.from(...DeltaObservableClasses.map(DeltaClass =>
-      DeltaClass.move(target).hijack()
+      DeltaClass.start(target)
+      .hijack()
+      ::map(v => DeltaClass.move(root)
+        .hijack()
+        ::takeUntil(DeltaClass.stop(root).hijack())
+      )
     ))
   }
 
