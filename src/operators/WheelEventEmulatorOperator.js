@@ -61,7 +61,8 @@ class WheelEventEmulatorSubcriber extends Subscriber {
   startNow () {
     if (!this._started) {
       this._started = true
-      this.dispatch(createWheelEventFrom(this._lastValue, WHEEL_START))
+      let value = {...this._lastValue, deltaX: 0, deltaY: 0}
+      this.dispatch(createWheelEventFrom(value, WHEEL_START))
     }
   }
 
@@ -73,7 +74,9 @@ class WheelEventEmulatorSubcriber extends Subscriber {
     this.cancelStop()
     if (this._started) {
       this._started = false
-      this.dispatch(createWheelEventFrom(this._lastValue, WHEEL_END))
+      let value = {...this._lastValue, deltaX: 0, deltaY: 0}
+      this.dispatch(createWheelEventFrom(value, WHEEL_MOVE))
+      this.dispatch(createWheelEventFrom(value, WHEEL_END))
     }
   }
 
