@@ -230,17 +230,13 @@ function main () {
   /**
    * An observable of move deltas.
    * These represent discrete events of scroll input.
-   * We hijack them to prevent default behavior from occurring.
-   * We stop observing them when we see a stop or start event.
    * @type {Observable<Delta>}
    */
-  const moveDeltas = startDeltas.switchMap(() => Scrolljack
-    .move(window, ...inputs)  // Convert events to  movement deltas.
-    .hijack()  // Hijack the events, so their default behavior doesn't occcur.
-    .takeUntil(stopDeltas)  // Stop taking events when a stop event occurs.
-    .momentum()  // Apply decceleration to the end of the movement.
-    .takeUntil(moveToDeltas)  // Stop taking events and momentum when other input occurs.
-  )
+  const moveDeltas = Scrolljack.move(container, root, ...inputs)
+    .switchMap(move => move
+      .momentum()  // Apply decceleration to the end of the movement.
+      .takeUntil(moveToDeltas)  // Stop taking events and momentum when other input occurs.
+    )
 
   /**
    * The valid scroll area as the shape `{width, height}`.
