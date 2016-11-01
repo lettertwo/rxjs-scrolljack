@@ -20,17 +20,17 @@ export class Mouse extends DeltaObservable {
         .from(target)
         .hijack()
         .accumulate()
-        ::takeUntil(this.stop(target))
+        ::takeUntil(this.scrollStop(target))
         ::skipWhile(netValue => inside(radius.w, radius.h, netValue.deltaX, netValue.deltaY))
         ::take(1)
       )
   }
 
-  static stop (target) {
+  static scrollStop (target) {
     return new this(merge(
-      super.stop(target, MOUSE_UP),
-      super.stop(target, MOUSE_LEAVE),
-      super.stop(target, CLICK),
+      super.scrollStop(target, MOUSE_UP),
+      super.scrollStop(target, MOUSE_LEAVE),
+      super.scrollStop(target, CLICK),
     ))
   }
 }

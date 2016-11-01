@@ -186,7 +186,7 @@ function main () {
    * These represent the stop of scroll input.
    * @type {Observable<Delta>}
    */
-  const stopDeltas = Scrolljack.stop(window, ...inputs)
+  const stopDeltas = Scrolljack.scrollStop(container, window, ...inputs)
 
   /**
    * Merge input values with the last offset into delta shapes.

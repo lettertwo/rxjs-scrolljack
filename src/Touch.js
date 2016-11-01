@@ -22,16 +22,16 @@ export class Touch extends DeltaObservable {
         .from(target)
         .hijack()
         .accumulate()
-        ::takeUntil(this.stop(target))
+        ::takeUntil(this.scrollStop(target))
         ::skipWhile(netValue => inside(radius.w, radius.h, netValue.deltaX, netValue.deltaY))
         ::take(1)
       )
   }
 
-  static stop (target) {
+  static scrollStop (target) {
     return new this(merge(
-      super.stop(target, TOUCH_END),
-      super.stop(target, TOUCH_CANCEL),
+      super.scrollStop(target, TOUCH_END),
+      super.scrollStop(target, TOUCH_CANCEL),
     ))
   }
 }
