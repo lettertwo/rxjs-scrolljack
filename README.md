@@ -10,8 +10,7 @@ Usage
 import Rx from 'rxjs';
 import Scrolljack, {Touch} from 'rxjs-scrolljack';
 
-Scrolljack(Touch)
-  .move(window)
+Scrolljack.scrollWindow(window, Touch)
   .switchMap(move => move.momentum(/* {stiffness: 170, damping: 26} */))
   .subscribe(value => {
     const maxX = document.body.scrollWidth - window.innerWidth;
