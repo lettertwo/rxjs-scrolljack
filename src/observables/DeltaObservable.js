@@ -133,7 +133,7 @@ export class DeltaObservable extends Observable {
     return new this(target, event)
   }
 
-  static moveTo (endValue, updater, scheduler) {
+  static scrollTo (endValue, updater, scheduler) {
     const startValue = this.createValue()
     endValue = this.createValue(endValue)
     return new this(DeltaGeneratorObservable.create(startValue, endValue, updater, scheduler))

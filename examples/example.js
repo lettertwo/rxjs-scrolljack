@@ -212,7 +212,7 @@ function main () {
     .switchMap(event => lastOffset
       .take(1) // Take the last offset.
       .mergeMap(offset => Scrolljack
-        .moveTo({  // Emulate scrolling to the click's offset.
+        .scrollTo({  // Emulate scrolling to the click's offset.
           deltaX: event.clientX - offset.x,
           deltaY: event.clientY - offset.y,
         })
