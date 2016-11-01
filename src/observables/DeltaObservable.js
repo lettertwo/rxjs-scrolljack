@@ -129,7 +129,7 @@ export class DeltaObservable extends Observable {
     return new this(target, event)::mapTo(this.createValue(value))
   }
 
-  static move (target, event) {
+  static scroll (target, event) {
     return new this(target, event)
   }
 
