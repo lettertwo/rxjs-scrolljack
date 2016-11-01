@@ -232,7 +232,7 @@ function main () {
    * These represent discrete events of scroll input.
    * @type {Observable<Delta>}
    */
-  const moveDeltas = Scrolljack.scroll(container, root, ...inputs)
+  const moveDeltas = Scrolljack.scrollWindow(container, root, ...inputs)
     .switchMap(move => move
       .momentum()  // Apply decceleration to the end of the movement.
       .takeUntil(moveToDeltas)  // Stop taking events and momentum when other input occurs.
