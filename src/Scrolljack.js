@@ -6,8 +6,20 @@ import {take} from 'rxjs/operator/take'
 import {throttle} from 'rxjs/operator/throttle'
 import {DeltaObservable} from './observables/DeltaObservable'
 
+const parseOpts = (target, rootOrDeltaObservableClass, ...DeltaObservableClasses) => {
+  let root = rootOrDeltaObservableClass
+  if (!root) {
+    root = target
+  } else if (root === DeltaObservable || root.prototype instanceof DeltaObservable) {
+    DeltaObservableClasses.unshift(root)
+    root = target
+  }
+  return [target, root, DeltaObservableClasses]
+}
+
 export class Scrolljack extends DeltaObservable {
-  static scrollStart (target, root, ...DeltaObservableClasses) {
+  static scrollStart (...args) {
+    const [target, root, DeltaObservableClasses] = parseOpts(...args)
     const sources = DeltaObservableClasses.map(DeltaClass =>
       DeltaClass.scrollStart(target).hijack()::throttle(() =>
         DeltaClass.scrollStop(root).hijack()
@@ -21,11 +33,12 @@ export class Scrolljack extends DeltaObservable {
     }
   }
 
-  static scroll (target, root, ...DeltaObservableClasses) {
-    return this.scrollWindow(target, root, ...DeltaObservableClasses)::mergeAll()
+  static scroll (...args) {
+    return this.scrollWindow(...args)::mergeAll()
   }
 
-  static scrollWindow (target, root, ...DeltaObservableClasses) {
+  static scrollWindow (...args) {
+    const [target, root, DeltaObservableClasses] = parseOpts(...args)
     const sources = DeltaObservableClasses.map(DeltaClass =>
       DeltaClass.scrollStart(target).hijack()::map(v =>
         DeltaClass.scroll(root).hijack()::takeUntil(
@@ -41,7 +54,8 @@ export class Scrolljack extends DeltaObservable {
     }
   }
 
-  static scrollStop (target, root, ...DeltaObservableClasses) {
+  static scrollStop (...args) {
+    const [target, root, DeltaObservableClasses] = parseOpts(...args)
     const sources = DeltaObservableClasses.map(DeltaClass =>
       DeltaClass.scrollStart(target).hijack()::mergeMap(() =>
         DeltaClass.scrollStop(root).hijack()::take(1)
