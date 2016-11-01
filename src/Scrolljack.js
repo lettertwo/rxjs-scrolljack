@@ -1,5 +1,7 @@
 import {map} from 'rxjs/operator/map'
+import {mergeMap} from 'rxjs/operator/mergeMap'
 import {takeUntil} from 'rxjs/operator/takeUntil'
+import {take} from 'rxjs/operator/take'
 import {throttle} from 'rxjs/operator/throttle'
 import {DeltaObservable} from './observables/DeltaObservable'
 
@@ -29,10 +31,18 @@ export class Scrolljack extends DeltaObservable {
     ))
   }
 
-  static scrollStop (target, ...DeltaObservableClasses) {
-    return this.from(...DeltaObservableClasses.map(DeltaClass =>
-      DeltaClass.stop(target).hijack()
-    ))
+  static scrollStop (target, root, ...DeltaObservableClasses) {
+    const sources = DeltaObservableClasses.map(DeltaClass =>
+      DeltaClass.scrollStart(target).hijack()::mergeMap(() =>
+        DeltaClass.scrollStop(root).hijack()::take(1)
+      )
+    )
+
+    if (sources.length > 1) {
+      return this.merge(...sources)
+    } else {
+      return sources[0]
+    }
   }
 }
 
