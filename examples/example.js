@@ -255,7 +255,7 @@ function main () {
    */
   const offsets = scrollBounds.switchMap(bounds =>
     lastOffset.take(1).mergeMap(initialOffset => Scrolljack
-      .from(Rx.Observable.merge(moveDeltas, moveToDeltas))  // Get deltas from any of our inputs.
+      .merge(moveDeltas, moveToDeltas)  // Get deltas from any of our inputs.
       .rect(bounds, initialOffset)  // Confine each move to our scrollable area.
       .scan(computeNextOffset, initialOffset)  // Accumulate deltas and convert to offsets.
       .do(lastOffset)  // Keep track of the last offset.

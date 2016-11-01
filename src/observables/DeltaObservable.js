@@ -1,6 +1,7 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
 import {mapTo} from 'rxjs/operator/mapTo'
+import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {DeltaGeneratorObservable} from './DeltaGeneratorObservable'
 import {HijackableEventObservable} from './HijackableEventObservable'
 import {DeltaOperator} from '../operators/DeltaOperator'
@@ -117,6 +118,10 @@ export class DeltaObservable extends Observable {
   }
 
   static start (target, event, value) {
+  static merge (...sources) {
+    return this.from(merge(...sources))
+  }
+
     return new this(target, event)::mapTo(this.createValue(value))
   }
 
