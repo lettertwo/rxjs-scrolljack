@@ -117,11 +117,11 @@ export class DeltaObservable extends Observable {
     return new this(target)
   }
 
-  static start (target, event, value) {
   static merge (...sources) {
     return this.from(merge(...sources))
   }
 
+  static scrollStart (target, event, value) {
     return new this(target, event)::mapTo(this.createValue(value))
   }
 

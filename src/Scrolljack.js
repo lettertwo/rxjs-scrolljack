@@ -12,7 +12,7 @@ export class Scrolljack extends DeltaObservable {
     }
   }
 
-  static start (target, ...DeltaObservableClasses) {
+  static scrollStart (target, ...DeltaObservableClasses) {
     return this.from(...DeltaObservableClasses.map(DeltaClass =>
       DeltaClass.start(target).hijack()
     ))

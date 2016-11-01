@@ -14,9 +14,9 @@ export class Touch extends DeltaObservable {
     super(target, event, excludeMultiTouch, computeTouchDelta, computeTouchVelocity)
   }
 
-  static start (target, radius = {w: 10, h: 10}) {
+  static scrollStart (target, radius = {w: 10, h: 10}) {
     return super
-      .start(target, TOUCH_START)
+      .scrollStart(target, TOUCH_START)
       .hijack()
       ::mergeMap(offset => super
         .from(target)

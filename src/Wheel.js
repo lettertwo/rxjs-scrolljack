@@ -15,8 +15,8 @@ export class Wheel extends DeltaObservable {
     }
   }
 
-  static start (target) {
-    return super.start(target, WHEEL_START)
+  static scrollStart (target) {
+    return super.scrollStart(target, WHEEL_START)
   }
 
   static stop (target) {

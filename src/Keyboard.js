@@ -15,8 +15,8 @@ export class Keyboard extends DeltaObservable {
     }
   }
 
-  static start (target) {
-    return super.start(target, KEY_START)
+  static scrollStart (target) {
+    return super.scrollStart(target, KEY_START)
   }
 
   static stop (target) {

@@ -12,9 +12,9 @@ export class Mouse extends DeltaObservable {
     super(target, event, null, computeMouseDelta, computeMouseVelocity)
   }
 
-  static start (target, radius = {w: 10, h: 10}) {
+  static scrollStart (target, radius = {w: 10, h: 10}) {
     return super
-      .start(target, MOUSE_DOWN)
+      .scrollStart(target, MOUSE_DOWN)
       .hijack()
       ::mergeMap(offset => super
         .from(target)

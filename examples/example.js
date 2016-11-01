@@ -179,7 +179,7 @@ function main () {
    * These represent the start of scroll input.
    * @type {Observable<Delta>}
    */
-  const startDeltas = Scrolljack.start(container, ...inputs)
+  const startDeltas = Scrolljack.scrollStart(container, window, ...inputs)
 
   /**
    * An observable of stop deltas.
