@@ -1,7 +1,5 @@
-/* global KeyboardEvent */
 import {Subscriber} from 'rxjs/Subscriber'
-import {supportsNewEvent} from '../utils'
-import {KEY_START, KEY_MOVE, KEY_END, KEY_DOWN} from '../events'
+import {KEY_START, KEY_MOVE, KEY_END, KEY_DOWN, EmulatedKeyboardEvent} from '../events'
 
 export class KeyboardEventEmulatorOperator {
   call (subscriber, source) {
@@ -62,49 +60,22 @@ class KeyboardEventEmulatorSubcriber extends Subscriber {
   startNow () {
     if (!this._started) {
       this._started = true
-      this.dispatch(createKeyboardEventFrom(this._lastValue, KEY_START))
+      this.dispatch(new EmulatedKeyboardEvent(this._lastValue, KEY_START))
     }
   }
 
   moveNow () {
-    this.dispatch(createKeyboardEventFrom(this._lastValue, KEY_MOVE))
+    this.dispatch(new EmulatedKeyboardEvent(this._lastValue, KEY_MOVE))
   }
 
   stopNow () {
     if (this._started) {
       this._started = false
-      this.dispatch(createKeyboardEventFrom(this._lastValue, KEY_END))
+      this.dispatch(new EmulatedKeyboardEvent(this._lastValue, KEY_END))
     }
   }
 
   dispatch (value) {
     super._next(value)
   }
-}
-
-export const createKeyboardEventFrom = (value, type) => {
-  if (supportsNewEvent()) {
-    return new KeyboardEvent(type, value)
-  } else {
-    return createOldKeyboardEventFrom(value, type)
-  }
-}
-
-const modifierMap = {
-  ctrlKey: 'Control',
-  shiftKey: 'Shift',
-  altKey: 'Alt',
-  metaKey: 'Meta',
-}
-
-const createOldKeyboardEventFrom = (value, type) => {
-  const {view, key, locale, repeat} = value
-  const modifiersList = Object.keys(modifierMap).reduce(
-    (acc, key) => value[key] ? [...acc, modifierMap[key]] : acc,
-    [],
-  )
-  const initArgs = [view, key, locale, modifiersList, repeat]
-  const event = document.createEvent('KeyboardEvent')
-  event.initKeyboardEvent(type, true, true, ...initArgs)
-  return event
 }
