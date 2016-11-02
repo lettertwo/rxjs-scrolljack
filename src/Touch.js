@@ -1,9 +1,12 @@
+import $$observable from 'symbol-observable'
 import {takeUntil} from 'rxjs/operator/takeUntil'
 import {skipWhile} from 'rxjs/operator/skipWhile'
 import {take} from 'rxjs/operator/take'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {mergeMap} from 'rxjs/operator/mergeMap'
+import {DeltaOperator} from './operators/DeltaOperator'
 import {DeltaObservable} from './observables/DeltaObservable'
+import {EmulatedTouchEventObservable} from './observables/EmulatedTouchEventObservable'
 import {inside} from './utils'
 import {TOUCH_START, TOUCH_MOVE, TOUCH_END, TOUCH_CANCEL} from './events'
 
@@ -11,7 +14,13 @@ const excludeMultiTouch = e => e.touches.length <= 1
 
 export class Touch extends DeltaObservable {
   constructor (target, event = TOUCH_MOVE) {
-    super(target, event, excludeMultiTouch, computeTouchDelta, computeTouchVelocity)
+    if (typeof target[$$observable] === 'function') {
+      super(target)
+    } else {
+      const source = EmulatedTouchEventObservable.create(target, event, excludeMultiTouch)
+      source.operator = new DeltaOperator(computeTouchDelta, computeTouchVelocity)
+      super(source)
+    }
   }
 
   static scrollStart (target, radius = {w: 10, h: 10}) {
