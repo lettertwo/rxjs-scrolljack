@@ -1,15 +1,24 @@
+import $$observable from 'symbol-observable'
 import {skipWhile} from 'rxjs/operator/skipWhile'
 import {takeUntil} from 'rxjs/operator/takeUntil'
 import {take} from 'rxjs/operator/take'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
+import {DeltaOperator} from './operators/DeltaOperator'
 import {DeltaObservable} from './observables/DeltaObservable'
+import {EmulatedMouseEventObservable} from './observables/EmulatedMouseEventObservable'
 import {inside} from './utils'
 import {MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, MOUSE_LEAVE, CLICK} from './events'
 
 export class Mouse extends DeltaObservable {
   constructor (target, event = MOUSE_MOVE) {
-    super(target, event, null, computeMouseDelta, computeMouseVelocity)
+    if (typeof target[$$observable] === 'function') {
+      super(target)
+    } else {
+      const source = EmulatedMouseEventObservable.create(target, event)
+      source.operator = new DeltaOperator(computeMouseDelta, computeMouseVelocity)
+      super(source)
+    }
   }
 
   static scrollStart (target, radius = {w: 10, h: 10}) {
