@@ -1,36 +1,21 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
-import {Subject} from 'rxjs/Subject'
-import {HijackableEventObservable} from './HijackableEventObservable'
-import {multicast} from 'rxjs/operator/multicast'
 import {filter} from 'rxjs/operator/filter'
 import {WheelEventEmulatorOperator} from '../operators/WheelEventEmulatorOperator'
+import {createEventSourcePool} from '../events/createEventSourcePool'
 import {WHEEL} from '../events'
 
-const wheelTargets = new WeakMap()
-
-const getEventSource = target => {
-  if (!wheelTargets.has(target)) {
-    wheelTargets.set(target, HijackableEventObservable.create(target, WHEEL)
-      .hijack()
-      .lift(new WheelEventEmulatorOperator())
-        ::multicast(new Subject())
-        .refCount()
-    )
-  }
-
-  return wheelTargets.get(target)
-}
+const eventSourcePool = createEventSourcePool(WheelEventEmulatorOperator)
 
 export class EmulatedWheelEventObservable extends Observable {
-  constructor (target, event, predicate) {
+  constructor (target, eventType, predicate) {
     if (typeof target[$$observable] === 'function') {
       super()
       this.source = target[$$observable]()
     } else {
       super()
-      this.source = getEventSource(target)
-        ::filter(({type}) => type === event)
+      this.source = eventSourcePool(target, eventType, WHEEL)
+        ::filter(({type}) => type === eventType)
 
       if (predicate) {
         this.source = this.source::filter(predicate)
