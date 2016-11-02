@@ -1,6 +1,7 @@
 import {Subscriber} from 'rxjs/Subscriber'
 import {async} from 'rxjs/scheduler/async'
-import {WHEEL_START, WHEEL_MOVE, WHEEL_END, EmulatedWheelEvent} from '../events'
+import {WHEEL_START, WHEEL_MOVE, WHEEL_END} from '../events'
+import {EmulatedWheelEvent} from '../events/EmulatedWheelEvent'
 
 const SCROLL_STOP_DELAY = 60
 

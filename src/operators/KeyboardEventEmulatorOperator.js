@@ -1,5 +1,6 @@
 import {Subscriber} from 'rxjs/Subscriber'
-import {KEY_START, KEY_MOVE, KEY_END, KEY_DOWN, EmulatedKeyboardEvent} from '../events'
+import {KEY_START, KEY_MOVE, KEY_END, KEY_DOWN} from '../events'
+import {EmulatedKeyboardEvent} from '../events/EmulatedKeyboardEvent'
 
 export class KeyboardEventEmulatorOperator {
   call (subscriber, source) {
