@@ -1,36 +1,31 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
-import {share} from 'rxjs/operator/share'
-import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {filter} from 'rxjs/operator/filter'
-import {HijackableEventObservable} from './HijackableEventObservable'
 import {KeyboardEventEmulatorOperator} from '../operators/KeyboardEventEmulatorOperator'
-import {KEY_UP, KEY_DOWN} from '../events'
+import {createEventSourcePool} from '../events/createEventSourcePool'
+import {KEY_UP, KEY_DOWN, KEY_END} from '../events'
 
-const keyDownTargets = new WeakMap()
-
-const getKeyDownEventSource = target => {
-  if (!keyDownTargets.has(target)) {
-    keyDownTargets.set(target, merge(
-        HijackableEventObservable.create(target, KEY_DOWN),
-        HijackableEventObservable.create(target, KEY_UP),
-      )
-      .lift(new KeyboardEventEmulatorOperator())
-      ::share()
-    )
+// Map synthetic keyboard events to real ones.
+const getRealEventType = eventType => {
+  switch (eventType) {
+    case KEY_UP:
+    case KEY_END:
+      return KEY_UP
+    default:
+      return KEY_DOWN
   }
-  return keyDownTargets.get(target)
 }
 
+const eventSourcePool = createEventSourcePool(KeyboardEventEmulatorOperator)
+
 export class EmulatedKeyboardEventObservable extends Observable {
-  constructor (target, event, predicate) {
+  constructor (target, eventType, predicate) {
     if (typeof target[$$observable] === 'function') {
       super()
       this.source = target[$$observable]()
     } else {
       super()
-      this.source = getKeyDownEventSource(target)
-        ::filter(({type}) => type === event)
+      this.source = eventSourcePool.get(target, eventType, getRealEventType(eventType))
 
       if (predicate) {
         this.source = this.source::filter(predicate)
