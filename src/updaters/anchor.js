@@ -8,52 +8,54 @@ class AnchorUpdater extends KinematicUpdater {
   _initSpring (spring) {
     spring.velocity = 0
     spring.netDelta = 0
-    spring.droppedDelta = 0
-  }
-
-  _catchFrameSpring (value, spring) {
-    spring.droppedDelta += spring.toDelta(value)
-    spring.velocity = spring.toVelocity(value)
   }
 
   _updateFrameSpring (value, spring) {
     spring.netDelta += spring.toDelta(value)
     spring.velocity = spring.toVelocity(value)
-    spring.droppedDelta = 0
   }
 
   _computeNextSpring (value, spring) {
     let {stopped} = this
-    let {netDelta, droppedDelta, stiffness: K, damping: B, precision: P} = spring
+    let {netDelta, velocity, stiffness: K, damping: B, precision: P} = spring
+
+    // If we're not stopped, add velocity from input
+    // to the residual velocity from the last update.
+    if (!stopped) {
+      velocity += spring.toVelocity(value)
+    }
 
     const t = Math.min(F, Math.max(value.deltaT || 1)) / 1000
 
-    let delta = spring.toDelta(value)
-
-    let velocity
-    if (!stopped) {
-      velocity = spring.toVelocity(value)
-    } else {
-      velocity = spring.velocity
-    }
-
-    netDelta += droppedDelta
-
     // Compute the result of the current frame.
-    let [nd, nv] = computeNextValue(netDelta, 0, velocity, t, K, B, P)
-    let newDelta = nd - netDelta
+    let [newNetDelta, newVelocity] = computeNextValue(netDelta, 0, velocity, t, K, B, P)
+    let newDelta = 0
 
     // If we're not stopped, make sure the spring doesn't push back
     // in the opposite direction of our velocity.
-    if (!stopped && delta && Math.abs(newDelta) > Math.abs(delta)) {
-      newDelta = delta + droppedDelta
+    if (!stopped) {
+      const sameDirection = velocity === spring.velocity ||
+        (velocity > 0 && spring.velocity > 0) ||
+        (velocity < 0 && spring.velocity < 0)
+
+      if (sameDirection && Math.abs(newNetDelta) < Math.abs(netDelta)) {
+        newVelocity = velocity
+      } else {
+        newDelta = newNetDelta - netDelta
+      }
+    } else {
+      newDelta = newNetDelta - netDelta
     }
 
-    return {...value, ...spring.fromDelta(newDelta), ...spring.fromVelocity(nv)}
+    return {
+      ...value,
+      ...spring.fromDelta(newDelta),
+      ...spring.fromVelocity(newVelocity),
+    }
   }
 
   _shouldGenerateNextSpring (spring) {
-    return spring.velocity !== 0 || spring.netDelta !== 0 || spring.droppedDelta !== 0
+    return spring.velocity !== 0 || spring.netDelta !== 0
   }
 }
 
