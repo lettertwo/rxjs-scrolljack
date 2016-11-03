@@ -1,3 +1,7 @@
+## 0.3.1
+
+* Improve anchored input behavior
+
 ## 0.3.0
 
 * Make anchor less volatile while receiving input
