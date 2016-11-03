@@ -1,3 +1,9 @@
+## 0.3.0
+
+* Make anchor less volatile while receiving input
+* Emulate and normalize events
+* Pool emulated event sources
+
 ## 0.2.0
 
 * Add Scrolljack.scrollWindow higher-order operator
