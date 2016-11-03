@@ -22,7 +22,7 @@ class AnchorUpdater extends KinematicUpdater {
     // If we're not stopped, add velocity from input
     // to the residual velocity from the last update.
     if (!stopped) {
-      velocity += spring.toVelocity(value)
+      velocity = 0.2 * velocity + 0.8 * spring.toVelocity(value)
     }
 
     const t = Math.min(F, Math.max(value.deltaT || 1)) / 1000
