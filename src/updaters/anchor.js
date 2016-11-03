@@ -29,23 +29,7 @@ class AnchorUpdater extends KinematicUpdater {
 
     // Compute the result of the current frame.
     let [newNetDelta, newVelocity] = computeNextValue(netDelta, 0, velocity, t, K, B, P)
-    let newDelta = 0
-
-    // If we're not stopped, make sure the spring doesn't push back
-    // in the opposite direction of our velocity.
-    if (!stopped) {
-      const sameDirection = velocity === spring.velocity ||
-        (velocity > 0 && spring.velocity > 0) ||
-        (velocity < 0 && spring.velocity < 0)
-
-      if (sameDirection && Math.abs(newNetDelta) < Math.abs(netDelta)) {
-        newVelocity = velocity
-      } else {
-        newDelta = newNetDelta - netDelta
-      }
-    } else {
-      newDelta = newNetDelta - netDelta
-    }
+    let newDelta = newNetDelta - netDelta
 
     return {
       ...value,
