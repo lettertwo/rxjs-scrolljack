@@ -14,7 +14,7 @@ export class EmulatedEvent {
     isTrusted: null,
   }
 
-  constructor (event, type) {
+  constructor (event, type = event.type) {
     const Interface = this.constructor.Interface
 
     for (const propName in Interface) {
