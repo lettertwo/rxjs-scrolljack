@@ -2,6 +2,8 @@ import $$observable from 'symbol-observable'
 import {takeUntil} from 'rxjs/operator/takeUntil'
 import {skipWhile} from 'rxjs/operator/skipWhile'
 import {take} from 'rxjs/operator/take'
+import {timer} from 'rxjs/observable/timer'
+import {raceStatic as race} from 'rxjs/operator/race'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {DeltaOperator} from './operators/DeltaOperator'
@@ -23,7 +25,9 @@ export class Touch extends DeltaObservable {
     }
   }
 
-  static scrollStart (target, radius = {w: 10, h: 10}) {
+  static scrollStart (target, radius = {w: 10, h: 10}, delay = 300) {
+    let scrollCancel = this.scrollStop(target)
+    if (delay > 0) scrollCancel = race(timer(delay), scrollCancel)
     return super
       .scrollStart(target, TOUCH_START)
       .hijack()
@@ -31,7 +35,7 @@ export class Touch extends DeltaObservable {
         .from(target)
         .hijack()
         .accumulate()
-        ::takeUntil(this.scrollStop(target))
+        ::takeUntil(scrollCancel)
         ::skipWhile(netValue => inside(radius.w, radius.h, netValue.deltaX, netValue.deltaY))
         ::take(1)
       )
