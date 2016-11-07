@@ -1,6 +1,5 @@
 import $$observable from 'symbol-observable'
 import {Observable} from 'rxjs/Observable'
-import {mapTo} from 'rxjs/operator/mapTo'
 import {mergeStatic as merge} from 'rxjs/operator/merge'
 import {DeltaGeneratorObservable} from './DeltaGeneratorObservable'
 import {HijackableEventObservable} from './HijackableEventObservable'
@@ -121,12 +120,12 @@ export class DeltaObservable extends Observable {
     return this.from(merge(...sources))
   }
 
-  static scrollStart (target, event, value) {
-    return new this(target, event)::mapTo(this.createValue(value))
+  static scrollStart (target, event) {
+    return new this(target, event)
   }
 
-  static scrollStop (target, event, value) {
-    return new this(target, event)::mapTo(this.createValue(value))
+  static scrollStop (target, event) {
+    return new this(target, event)
   }
 
   static scroll (target, event) {
