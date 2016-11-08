@@ -1,3 +1,9 @@
+## 0.3.2
+
+* Fix emulation of default event types
+* Use start/stop events as start/stop values
+* Add default timeout to mouse and touch starts
+
 ## 0.3.1
 
 * Improve anchored input behavior
