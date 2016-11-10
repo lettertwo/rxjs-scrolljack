@@ -8,7 +8,7 @@ module.exports = {
     path: path.resolve('./built'),
     filename: 'bundle.js',
   },
-  devtool: 'eval',
+  devtool: 'module-inline-source-map',
   module: {
     loaders: [{
       test: /\.js$/,
