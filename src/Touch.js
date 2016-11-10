@@ -20,7 +20,7 @@ export class Touch extends DeltaObservable {
       super(target)
     } else {
       const source = EmulatedTouchEventObservable.create(target, event, excludeMultiTouch)
-      source.operator = new DeltaOperator(computeTouchDelta, computeTouchVelocity)
+      source.operator = new DeltaOperator(computeTouchDelta, computeTouchVelocity, snapshotTouchEvent)
       super(source)
     }
   }
@@ -54,7 +54,9 @@ export default Touch
 const computeTouchDelta = (event, lastEvent) => {
   let deltaX = 0
   let deltaY = 0
-  if (lastEvent && lastEvent.touches && lastEvent.touches.length) {
+  const hasATouch = event && event.touches && event.touches.length
+  const hadATouch = lastEvent && lastEvent.touches && lastEvent.touches.length
+  if (hasATouch && hadATouch) {
     const {clientX: prevX, clientY: prevY} = lastEvent.touches[0]
     const {clientX, clientY} = event.touches[0]
     deltaX = prevX - clientX
@@ -66,7 +68,9 @@ const computeTouchDelta = (event, lastEvent) => {
 const computeTouchVelocity = (event, lastEvent, deltaT) => {
   let velocityX = 0
   let velocityY = 0
-  if (lastEvent && lastEvent.touches && lastEvent.touches.length) {
+  const hasATouch = event && event.touches && event.touches.length
+  const hadATouch = lastEvent && lastEvent.touches && lastEvent.touches.length
+  if (deltaT && hasATouch && hadATouch) {
     const t = deltaT / 1000
     const {clientX: prevX, clientY: prevY} = lastEvent.touches[0]
     const {clientX, clientY} = event.touches[0]
@@ -74,4 +78,13 @@ const computeTouchVelocity = (event, lastEvent, deltaT) => {
     velocityY = (prevY - clientY) / t
   }
   return {velocityX, velocityY}
+}
+
+const snapshotTouchEvent = event => {
+  let touches = []
+  for (let i = 0; i < event.touches.length; i++) {
+    const {clientX, clientY} = event.touches[i]
+    touches.push({clientX, clientY})
+  }
+  return {touches}
 }
