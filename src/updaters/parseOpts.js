@@ -37,6 +37,8 @@ export const parseOpts = optsLike => {
     stiffness: K,
     damping: B,
     precision: P,
+    minNetDelta: 0,
+    maxNetDelta: 0,
     ...optsLike,
   }
 }
@@ -55,6 +57,8 @@ export const parseXOpts = opts => parseOpts({
   fromDelta: toDeltaXFromDelta,
   toVelocity: toVelocityFromVelocityX,
   fromVelocity: toVelocityXFromVelocity,
+  minNetDelta: opts && opts.x || 0,
+  maxNetDelta: (opts && opts.x || 0) + (opts && opts.width || 0),
   ...opts,
 })
 
@@ -63,5 +67,7 @@ export const parseYOpts = opts => parseOpts({
   fromDelta: toDeltaYFromDelta,
   toVelocity: toVelocityFromVelocityY,
   fromVelocity: toVelocityYFromVelocity,
+  minNetDelta: opts && opts.y || 0,
+  maxNetDelta: (opts && opts.y || 0) + (opts && opts.height || 0),
   ...opts,
 })
