@@ -30,7 +30,6 @@ export class Touch extends DeltaObservable {
     if (delay > 0) scrollCancel = race(timer(delay), scrollCancel)
     return super
       .scrollStart(target, TOUCH_START)
-      .hijack()
       ::mergeMap(offset => super
         .from(target)
         .hijack()
