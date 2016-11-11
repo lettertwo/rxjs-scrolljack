@@ -164,6 +164,17 @@ function main () {
   }
 
   /**
+   * Keep track of the last scroll delta.
+   * We merge this with input deltas and apply
+   * the generated deltas to the scroll behavior.
+   * @type {Observable<Offset>}
+   */
+  const lastDelta = new Rx.BehaviorSubject()
+
+  // Seed updates with an initial delta.
+  lastDelta.next(Scrolljack.createValue())
+
+  /**
    * Keep track of the last scroll offset.
    * We merge this with input values and apply
    * the generated offsets to the scroll behavior.
@@ -234,7 +245,7 @@ function main () {
    */
   const moveDeltas = Scrolljack.scrollWindow(container, root, ...inputs)
     .switchMap(move => move
-      .momentum()  // Apply decceleration to the end of the movement.
+      .momentum(lastDelta)  // Apply decceleration to the end of the movement, taking into account the last delta.
       .takeUntil(moveToDeltas)  // Stop taking events and momentum when other input occurs.
     )
 
@@ -257,6 +268,7 @@ function main () {
     lastOffset.take(1).mergeMap(initialOffset => Scrolljack
       .merge(moveDeltas, moveToDeltas)  // Get deltas from any of our inputs.
       .rect(bounds, initialOffset)  // Confine each move to our scrollable area.
+      .do(lastDelta)  // Keep track of the last delta.
       .scan(computeNextOffset, initialOffset)  // Accumulate deltas and convert to offsets.
       .do(lastOffset)  // Keep track of the last offset.
       .map(roundOffset)  // 'Snap' the offset to the nearest pixel.
