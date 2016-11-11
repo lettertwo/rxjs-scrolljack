@@ -1,3 +1,9 @@
+## 0.4.0
+
+* Sync multiple kinematic operators with a latest value source
+* Bump rxjs@5.0.0-rc.2
+* Snapshot touch events in delta operator
+
 ## 0.3.2
 
 * Fix emulation of default event types
