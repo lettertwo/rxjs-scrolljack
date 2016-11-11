@@ -9,6 +9,7 @@ import {MomentumOperator} from '../operators/MomentumOperator'
 import {AnchorOperator} from '../operators/AnchorOperator'
 import {AccumulationOperator} from '../operators/AccumulationOperator'
 import {HijackOperator} from '../operators/HijackOperator'
+import {hasDelta} from '../utils'
 
 const DEFAULT_VALUE = Object.freeze({
   deltaT: 0,
@@ -47,14 +48,18 @@ export class DeltaObservable extends Observable {
     return this.lift(new HijackOperator(predicate))
   }
 
-  rect (bounds, initialOffset) {
-    let initialValue = {...initialOffset}
-    if (initialOffset.x != null || initialOffset.y != null) {
-      initialValue.deltaX = initialOffset.x
-      initialValue.deltaY = initialOffset.y
+  rect (bounds, latestValueOrSourceOrScheduler, scheduler) {
+    let latestValueOrSource = latestValueOrSourceOrScheduler
+    if (latestValueOrSource.x != null || latestValueOrSource.y != null) {
+      latestValueOrSource = this.constructor.createValue({
+        deltaX: latestValueOrSource.x,
+        deltaY: latestValueOrSource.y,
+      })
+    } else if (hasDelta(latestValueOrSource)) {
+      latestValueOrSource = this.constructor.createValue(latestValueOrSource)
     }
-    initialValue = this.constructor.createValue(initialValue)
-    return this.lift(new RectOperator(bounds, initialValue))
+
+    return this.lift(new RectOperator(bounds, latestValueOrSource, scheduler))
   }
 
   momentum (optsOrLatestSource, latestSourceOrScheduler, scheduler) {
