@@ -2,12 +2,13 @@ import $$observable from 'symbol-observable'
 import {Subscriber} from 'rxjs/Subscriber'
 import {DeltaGeneratorObservable} from '../observables/DeltaGeneratorObservable'
 import {Updater} from '../updaters/Updater'
-import {hasDelta} from '../utils'
+import {hasDelta, isDeltaLike} from '../utils'
 
 export class KinematicOperator {
-  constructor (optsOrLatestSource, latestSourceorScheduler, scheduler) {
+  constructor (optsOrLatestSource, latestSourceOrScheduler, scheduler) {
     let opts = optsOrLatestSource
-    let latestSource = latestSourceorScheduler
+    let latestSource = latestSourceOrScheduler
+    let initialValue
 
     if (opts && typeof opts.schedule === 'function') {
       scheduler = opts
@@ -17,6 +18,14 @@ export class KinematicOperator {
       scheduler = latestSource
       latestSource = opts
       opts = null
+    } else if (isDeltaLike(opts)) {
+      scheduler = latestSource
+      initialValue = opts
+      latestSource = null
+      opts = null
+    } else if (isDeltaLike(latestSource)) {
+      initialValue = latestSource
+      latestSource = null
     } else if (latestSource && typeof latestSource.schedule === 'function') {
       scheduler = latestSource
       latestSource = null
@@ -24,6 +33,7 @@ export class KinematicOperator {
 
     this.opts = opts
     this.latestSource = latestSource
+    this.initialValue = initialValue
     this.scheduler = scheduler
   }
 
@@ -32,11 +42,12 @@ export class KinematicOperator {
   }
 
   call (subscriber, source) {
-    const {opts, latestSource, scheduler} = this
+    const {opts, latestSource, initialValue, scheduler} = this
     const updater = this._getUpdater(opts)
     return source._subscribe(new KinematicSubscriber(
       subscriber,
       updater,
+      initialValue,
       latestSource,
       scheduler,
     ))
@@ -46,7 +57,7 @@ export class KinematicOperator {
 export default KinematicOperator
 
 export class KinematicSubscriber extends Subscriber {
-  constructor (destination, updater, latestSource, scheduler) {
+  constructor (destination, updater, initialValue, latestSource, scheduler) {
     super(destination)
     this.scheduler = scheduler
     this.updater = updater
@@ -54,6 +65,10 @@ export class KinematicSubscriber extends Subscriber {
 
     if (latestSource) {
       this.add(latestSource.subscribe(value => this._updateFrame(value)))
+    }
+
+    if (initialValue) {
+      this._updateFrame(initialValue)
     }
   }
 
