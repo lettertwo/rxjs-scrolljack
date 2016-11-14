@@ -1,12 +1,18 @@
+const fs = require('fs')
 const path = require('path')
 
 module.exports = {
-  entry: [
-    path.resolve('./example'),
-  ],
+  entry: fs.readdirSync(__dirname)
+    .filter(filename => fs.statSync(filename).isDirectory())
+    .map(dirname => [dirname, path.resolve(path.join(dirname, 'example.js'))])
+    .filter(([dirname, filename]) => fs.existsSync(filename))
+    .reduce((entries, [dirname, filename]) => ({
+      ...entries,
+      [dirname]: filename,
+    }), {}),
   output: {
     path: path.resolve('./built'),
-    filename: 'bundle.js',
+    filename: '[name]/bundle.js',
   },
   devtool: 'module-inline-source-map',
   module: {

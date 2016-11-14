@@ -24,8 +24,33 @@ const middleware = webpackMiddleware(compiler, {
 
 app.use(middleware)
 
-app.get('/', function (req, res) {
-  res.write(fs.readFileSync(path.join(__dirname, 'index.html')))
+app.get('*', function (req, res) {
+  let filepath = path.join(__dirname, decodeURIComponent(req.path))
+
+  // Index file support.
+  if (filepath[filepath.length - 1] === '/') {
+    filepath = path.join(filepath, 'index.html')
+  }
+
+  let stats
+  try {
+    stats = fs.statSync(filepath)
+    if (stats.isDirectory()) {
+      // If we found a dir, look for an index.html.
+      filepath = path.join(filepath, '/index.html')
+      stats = fs.statSync(filepath)
+    }
+  } catch (err) {
+    const notfound = ['ENOENT', 'ENAMETOOLONG', 'ENOTDIR']
+    if (~notfound.indexOf(err.code)) {
+      return res.status(404).send('Not Found')
+    } else {
+      console.error(err)
+      return res.status(500).send('Server Error')
+    }
+  }
+
+  res.write(fs.readFileSync(filepath))
   res.end()
 })
 
