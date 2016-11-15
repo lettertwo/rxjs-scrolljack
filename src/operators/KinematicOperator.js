@@ -87,7 +87,9 @@ export class KinematicSubscriber extends Subscriber {
   }
 
   _stop () {
-    this.updater.stop()
+    if (!this.updater.stopped) {
+      this.updater.stop()
+    }
   }
 
   _computeNext (value) {
