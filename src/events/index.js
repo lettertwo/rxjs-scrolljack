@@ -27,3 +27,11 @@ export const WHEEL = 'wheel'
 export const WHEEL_START = 'wheelstart'
 export const WHEEL_MOVE = 'wheelmove'
 export const WHEEL_END = 'wheelend'
+
+// Scroll Events
+export const SCROLL = 'scroll'
+
+// Synthetic Scroll Events
+export const SCROLL_START = 'scrollstart'
+export const SCROLL_MOVE = 'scrollmove'
+export const SCROLL_END = 'scrollend'
