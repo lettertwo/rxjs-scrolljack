@@ -29,7 +29,6 @@ class WheelEventEmulatorSubcriber extends Subscriber {
 
     if (!this._started) {
       this.startNow()
-      this.moveNow()
     } else {
       this.moveNow()
       this.scheduleStop()
@@ -60,9 +59,9 @@ class WheelEventEmulatorSubcriber extends Subscriber {
   startNow () {
     if (!this._started) {
       this._started = true
-      let value = {...this._lastValue, deltaX: 0, deltaY: 0}
-      this.dispatch(new EmulatedWheelEvent(value, WHEEL_START))
+      this.dispatch(new EmulatedWheelEvent(this._lastValue, WHEEL_START))
     }
+    this.moveNow()
   }
 
   moveNow () {
@@ -71,11 +70,10 @@ class WheelEventEmulatorSubcriber extends Subscriber {
 
   stopNow () {
     this.cancelStop()
+    this.moveNow()
     if (this._started) {
       this._started = false
-      let value = {...this._lastValue, deltaX: 0, deltaY: 0}
-      this.dispatch(new EmulatedWheelEvent(value, WHEEL_MOVE))
-      this.dispatch(new EmulatedWheelEvent(value, WHEEL_END))
+      this.dispatch(new EmulatedWheelEvent(this._lastValue, WHEEL_END))
     }
   }
 
