@@ -29,7 +29,6 @@ class ScrollEventEmulatorSubcriber extends Subscriber {
 
     if (!this._started) {
       this.startNow()
-      this.moveNow()
     } else {
       this.moveNow()
       this.scheduleStop()
@@ -62,6 +61,7 @@ class ScrollEventEmulatorSubcriber extends Subscriber {
       this._started = true
       this.dispatch(new EmulatedUIEvent(this._lastValue, SCROLL_START))
     }
+    this.moveNow()
   }
 
   moveNow () {
@@ -70,9 +70,9 @@ class ScrollEventEmulatorSubcriber extends Subscriber {
 
   stopNow () {
     this.cancelStop()
+    this.moveNow()
     if (this._started) {
       this._started = false
-      this.dispatch(new EmulatedUIEvent(this._lastValue, SCROLL_MOVE))
       this.dispatch(new EmulatedUIEvent(this._lastValue, SCROLL_END))
     }
   }
