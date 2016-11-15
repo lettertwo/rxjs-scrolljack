@@ -5,6 +5,7 @@ import {takeUntil} from 'rxjs/operator/takeUntil'
 import {take} from 'rxjs/operator/take'
 import {throttle} from 'rxjs/operator/throttle'
 import {DeltaObservable} from './observables/DeltaObservable'
+import {Scroll} from './Scroll'
 
 const parseOpts = (target, rootOrDeltaObservableClass, ...DeltaObservableClasses) => {
   let root = rootOrDeltaObservableClass
@@ -14,6 +15,11 @@ const parseOpts = (target, rootOrDeltaObservableClass, ...DeltaObservableClasses
     DeltaObservableClasses.unshift(root)
     root = target
   }
+
+  if (!DeltaObservableClasses.length) {
+    DeltaObservableClasses.push(Scroll)
+  }
+
   return [target, root, DeltaObservableClasses]
 }
 
