@@ -103,12 +103,12 @@ export class KinematicSubscriber extends Subscriber {
   }
 
   _complete () {
-    const {destination: subscriber, updater, scheduler} = this
+    const {destination: subscriber, updater, scheduler, latestSource} = this
 
     this._stop()
 
     this.add(DeltaGeneratorObservable
-      .from(updater, scheduler)
+      .from(updater, scheduler, latestSource)
       .subscribe({
         next: value => { subscriber.next(value) },
         complete: () => { super._complete() },
