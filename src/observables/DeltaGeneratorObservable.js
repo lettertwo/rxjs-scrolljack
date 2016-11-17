@@ -96,12 +96,9 @@ const F = 1000 / 60  // Default frame rate
 const createCondition = updater => () => updater.shouldGenerateNext()
 
 const createIterator = (updater, scheduler) => ([lastValue, time]) => {
-  let {deltaX, deltaY} = lastValue
+  let {deltaX, deltaY, velocityX = 0, velocityY = 0} = lastValue
   let now = scheduler.now()
   let deltaT = now - time
-
-  // If it's too soon to update, drop an update.
-  // if (deltaT < 1) return lastValue
 
   // If it seems like we've dropped a lot of frames, its probably because
   // this process was backgrounded (switched tabs), so we should restart.
@@ -109,50 +106,15 @@ const createIterator = (updater, scheduler) => ([lastValue, time]) => {
     deltaT = F
   }
 
-  let t = deltaT / 1000
-
-  // Calculate the number of frames that have been 'dropped' since the
-  // last update. Dropped frames are updates that should've happened within
-  // a window of time, but didn't, usually because of jank, normalizing
-  // optimizations, or other delays introduced by the user/browser/runtime.
-  let droppedFrames = Math.floor(deltaT / F)
-
-  if (droppedFrames) {
-    let droppedValue = {
-      deltaX: deltaX / (droppedFrames + 1),
-      deltaY: deltaY / (droppedFrames + 1),
-      deltaT: F,
-    }
-    droppedValue.velocityX = deltaX / t
-    droppedValue.velocityY = deltaY / t
-
-    // Subtract dropped frames' time deltas from the original time delta
-    // to get the time deltas for just the latest frame.
-    deltaT = deltaT - droppedValue.deltaT * droppedFrames
-    t = deltaT / 1000
-
-    // Apply the dropped frame deltas to the destination.
-    for (let i = 0; i < droppedFrames; i++) {
-      droppedValue = updater.computeNext(droppedValue)
-      updater.catchFrame(droppedValue)
-      // Subtract dropped frames' deltas from the original deltas
-      // to get the deltas for just the latest frame. We do this in the loop
-      // instead of outside of it because the updater may adjust the values
-      // on each iteration.
-      deltaX -= droppedValue.deltaX
-      deltaY -= droppedValue.deltaY
-    }
-  }
-
-  let newValue = {
+  let newLastValue = {
     deltaX,
     deltaY,
     deltaT,
-    velocityX: deltaX / t,
-    velocityY: deltaY / t,
+    velocityX,
+    velocityY,
   }
 
-  return [updater.computeNext(newValue), now]
+  return [updater.computeNext(newLastValue), now]
 }
 
 const createSelector = updater => ([lastValue]) => {
