@@ -4,30 +4,32 @@ import {parseXOpts, parseYOpts} from './parseOpts'
 
 class MomentumUpdater extends KinematicUpdater {
   _initSpring (spring) {
-    spring.velocity = 0
-    spring.lastDelta = 0
-  }
-
-  _updateFrameSpring (value, spring) {
-    spring.lastDelta = spring.toDelta(value)
-    spring.velocity = spring.toVelocity(value)
+    spring.lastVelocity = 0
   }
 
   _computeNextSpring (value, spring) {
     // If we've not stopped yet, just pass the value through.
-    if (!this.stopped) return value
+    if (!this.stopped) {
+      spring.lastVelocity = spring.toVelocity(value)
+      return value
+    }
+
+    const delta = spring.toDelta(value)
+    const velocity = spring.toVelocity(value)
 
     const t = value.deltaT / 1000
-    let {lastDelta, velocity, stiffness: K, damping: B, precision: P} = spring
+    const {stiffness: K, damping: B, precision: P} = spring
 
     // Compute the result of the current frame.
-    let [nd, nv] = computeNextValue(lastDelta, 0, velocity, t, K, B, P)
+    const [nd, nv] = computeNextValue(delta, 0, velocity, t, K, B, P)
+
+    spring.lastVelocity = nv
 
     return {...value, ...spring.fromDelta(nd), ...spring.fromVelocity(nv)}
   }
 
   _shouldGenerateNextSpring (spring) {
-    return spring.velocity !== 0
+    return spring.lastVelocity !== 0
   }
 }
 
