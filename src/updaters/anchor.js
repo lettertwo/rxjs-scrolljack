@@ -5,9 +5,14 @@ import {parseXOpts, parseYOpts} from './parseOpts'
 const F = 1000 / 60  // Default frame rate
 
 class AnchorUpdater extends KinematicUpdater {
-  _initSpring (spring) {
-    spring.velocity = 0
-    spring.netDelta = 0
+  _initSpring (spring, initialValue) {
+    if (initialValue) {
+      spring.netDelta = spring.toDelta(initialValue)
+      spring.velocity = spring.toVelocity(initialValue)
+    } else {
+      spring.velocity = 0
+      spring.netDelta = 0
+    }
   }
 
   _updateFrameSpring (value, spring) {

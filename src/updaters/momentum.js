@@ -3,8 +3,12 @@ import {computeNextValue} from './computeNextValue'
 import {parseXOpts, parseYOpts} from './parseOpts'
 
 class MomentumUpdater extends KinematicUpdater {
-  _initSpring (spring) {
-    spring.lastVelocity = 0
+  _initSpring (spring, initialValue) {
+    if (initialValue) {
+      spring.lastVelocity = spring.toVelocity(initialValue)
+    } else {
+      spring.lastVelocity = 0
+    }
   }
 
   _computeNextSpring (value, spring) {
