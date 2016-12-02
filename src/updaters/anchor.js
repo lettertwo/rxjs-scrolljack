@@ -2,49 +2,45 @@ import {KinematicUpdater} from './KinematicUpdater'
 import {computeNextValue} from './computeNextValue'
 import {parseXOpts, parseYOpts} from './parseOpts'
 
-const F = 1000 / 60  // Default frame rate
-
 class AnchorUpdater extends KinematicUpdater {
   _initSpring (spring, initialValue) {
     if (initialValue) {
       spring.netDelta = spring.toDelta(initialValue)
-      spring.velocity = spring.toVelocity(initialValue)
+      spring.lastVelocity = spring.toVelocity(initialValue)
     } else {
-      spring.velocity = 0
+      spring.lastVelocity = 0
       spring.netDelta = 0
     }
   }
 
-  _updateFrameSpring (value, spring) {
-    spring.netDelta += spring.toDelta(value)
-    spring.velocity = spring.toVelocity(value)
-  }
-
   _computeNextSpring (value, spring) {
-    let {stopped} = this
-    let {netDelta, velocity, stiffness: K, damping: B, precision: P} = spring
+    const t = value.deltaT / 1000
+    const {netDelta, stiffness: K, damping: B, precision: P} = spring
+    const delta = spring.toDelta(value)
+    const velocity = spring.toVelocity(value)
 
-    // If we're not stopped, add velocity from input
-    // to the residual velocity from the last update.
-    if (!stopped) {
-      velocity = 0.2 * velocity + 0.8 * spring.toVelocity(value)
+    let newNetDelta
+    if (!this.stopped) {
+      newNetDelta = netDelta + delta
+    } else {
+      newNetDelta = netDelta
     }
 
-    const t = Math.min(F, Math.max(value.deltaT || 1)) / 1000
-
     // Compute the result of the current frame.
-    let [newNetDelta, newVelocity] = computeNextValue(netDelta, 0, velocity, t, K, B, P)
-    let newDelta = newNetDelta - netDelta
+    const [nnd, nv] = computeNextValue(newNetDelta, 0, velocity, t, K, B, P)
+
+    spring.netDelta = nnd
+    spring.lastVelocity = nv
 
     return {
       ...value,
-      ...spring.fromDelta(newDelta),
-      ...spring.fromVelocity(newVelocity),
+      ...spring.fromDelta(nnd - netDelta),
+      ...spring.fromVelocity(nv),
     }
   }
 
   _shouldGenerateNextSpring (spring) {
-    return spring.velocity !== 0 || spring.netDelta !== 0
+    return spring.lastVelocity !== 0 || spring.netDelta !== 0
   }
 }
 
