@@ -4,7 +4,6 @@ import {animationFrame} from 'rxjs/scheduler/animationFrame'
 import {observeOn} from 'rxjs/operator/observeOn'
 import {withLatestFrom} from 'rxjs/operator/withLatestFrom'
 import {map} from 'rxjs/operator/map'
-import {GenerateObservable} from 'rxjs/observable/GenerateObservable'
 import {_do as tap} from 'rxjs/operator/do'
 import {takeWhile} from 'rxjs/operator/takeWhile'
 import {anchor} from '../updaters/anchor'
@@ -31,21 +30,24 @@ export class DeltaGeneratorObservable extends Observable {
 
   _subscribe (subscriber) {
     let {startValue, endValue, latestSource, updater, scheduler} = this
-    if (typeof updater === 'function') updater = updater()
-
-    if (endValue && startValue) {
-      // We subtract our target delta from the updater's net delta so that
-      // it ends up generating that amount of delta in the original orientation
-      // as it attempts to bring the netDelta back to 0.
-      updater.updateFrame({
-        ...endValue,
-        deltaX: startValue.deltaX - endValue.deltaX,
-        deltaY: startValue.deltaY - endValue.deltaY,
-      })
+    if (typeof updater === 'function') {
+      if (endValue && startValue) {
+        // We subtract our target delta from the updater's net delta so that
+        // it ends up generating that amount of delta in the original orientation
+        // as it attempts to bring the netDelta back to 0.
+        updater = updater(null, {
+          ...endValue,
+          deltaX: startValue.deltaX - endValue.deltaX,
+          deltaY: startValue.deltaY - endValue.deltaY,
+        })
+      } else {
+        updater = updater()
+      }
     }
 
-    return DeltaGeneratorObservable.from(updater, scheduler, latestSource || startValue)
-      ._subscribe(subscriber)
+    return DeltaGeneratorObservable
+    .from(updater, scheduler, latestSource || startValue)
+    .subscribe(subscriber)
   }
 
   static create (latestSourceOrStartValue, endValue, updater = anchor, scheduler = animationFrame) {
@@ -54,38 +56,28 @@ export class DeltaGeneratorObservable extends Observable {
 
   static from (updater = anchor, scheduler = animationFrame, latestSourceOrInitialValue) {
     let latestSource = latestSourceOrInitialValue
-    let initialValue
-    let selector
-
-    if (isDeltaLike(latestSource)) {
-      initialValue = latestSource
-      latestSource = null
-      selector = createSelector(updater)
-    } else {
-      initialValue = {deltaX: 0, deltaY: 0}
-      selector = createSelector()
-    }
-
+    const latestTime = new BehaviorSubject(scheduler.now())
     const condition = createCondition(updater)
     const iterator = createIterator(updater, scheduler)
-    if (latestSource) {
-      let timeStamps = new BehaviorSubject(scheduler.now())
-      return latestSource
-      ::withLatestFrom(timeStamps)
-      ::takeWhile(condition)
-      ::observeOn(scheduler)
-      ::map(iterator)
-      ::tap(([, time]) => timeStamps.next(time))
-      ::map(selector)
+    let doUpdate
+
+    if (isDeltaLike(latestSource)) {
+      latestSource = new BehaviorSubject(latestSource)
+      doUpdate = ([value, time]) => {
+        latestSource.next(value)
+        latestTime.next(time)
+      }
     } else {
-      return GenerateObservable.create(
-        [initialValue, scheduler.now()],
-        condition,
-        iterator,
-        selector,
-        scheduler,
-      )
+      doUpdate = ([, time]) => latestTime.next(time)
     }
+
+    return latestSource
+    ::withLatestFrom(latestTime)
+    ::takeWhile(condition)
+    ::observeOn(scheduler)
+    ::map(iterator)
+    ::tap(doUpdate)
+    ::map(selector)
   }
 }
 
@@ -117,7 +109,4 @@ const createIterator = (updater, scheduler) => ([lastValue, time]) => {
   return [updater.computeNext(newLastValue), now]
 }
 
-const createSelector = updater => ([lastValue]) => {
-  if (updater) updater.updateFrame(lastValue)
-  return lastValue
-}
+const selector = ([value]) => value
