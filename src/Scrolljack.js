@@ -22,14 +22,35 @@ const parseOpts = (target, rootOrDeltaObservableClass, ...DeltaObservableClasses
 
   return [target, root, DeltaObservableClasses]
 }
+const isDeltaObservable = value =>
+  value && (value === DeltaObservable || value.prototype instanceof DeltaObservable)
 
 export class Scrolljack extends DeltaObservable {
-  static scrollStart (...args) {
-    const [target, root, DeltaObservableClasses] = parseOpts(...args)
+  static scrollStart (target, maybeRootOrClosingSelector, ...DeltaObservableClasses) {
+    let root = target
+    let closingSelector = maybeRootOrClosingSelector
+
+    if (isDeltaObservable(closingSelector)) {
+      DeltaObservableClasses.unshift(closingSelector)
+      closingSelector = null
+    }
+
+    if (!DeltaObservableClasses.length) {
+      DeltaObservableClasses.push(Scroll)
+    }
+
+    if (typeof closingSelector !== 'function') {
+      root = closingSelector || root
+      closingSelector = null
+    }
+
+    if (!closingSelector) {
+      closingSelector = DeltaClass => DeltaClass.scrollStop(root)
+    }
+
     const sources = DeltaObservableClasses.map(DeltaClass =>
-      DeltaClass.scrollStart(target).hijack()::throttle(() =>
-        DeltaClass.scrollStop(root).hijack()
-      )
+      DeltaClass.scrollStart(target).hijack()
+      ::throttle(() => closingSelector(DeltaClass))
     )
 
     if (sources.length > 1) {
