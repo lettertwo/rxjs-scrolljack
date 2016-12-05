@@ -1,6 +1,5 @@
 import $$observable from 'symbol-observable'
 import {map} from 'rxjs/operator/map'
-import {mergeAll} from 'rxjs/operator/mergeAll'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {takeUntil} from 'rxjs/operator/takeUntil'
 import {take} from 'rxjs/operator/take'
@@ -8,21 +7,6 @@ import {throttle} from 'rxjs/operator/throttle'
 import {DeltaObservable} from './observables/DeltaObservable'
 import {Scroll} from './Scroll'
 
-const parseOpts = (target, rootOrDeltaObservableClass, ...DeltaObservableClasses) => {
-  let root = rootOrDeltaObservableClass
-  if (!root) {
-    root = target
-  } else if (root === DeltaObservable || root.prototype instanceof DeltaObservable) {
-    DeltaObservableClasses.unshift(root)
-    root = target
-  }
-
-  if (!DeltaObservableClasses.length) {
-    DeltaObservableClasses.push(Scroll)
-  }
-
-  return [target, root, DeltaObservableClasses]
-}
 const isDeltaObservable = value =>
   value && (value === DeltaObservable || value.prototype instanceof DeltaObservable)
 
@@ -61,17 +45,59 @@ export class Scrolljack extends DeltaObservable {
     }
   }
 
-  static scroll (...args) {
-    return this.scrollWindow(...args)::mergeAll()
+  static scroll (target, ...DeltaObservableClasses) {
+    if (!DeltaObservableClasses.length) {
+      DeltaObservableClasses.push(Scroll)
+    }
+
+    const sources = DeltaObservableClasses.map(DeltaClass =>
+      DeltaClass.scroll(target).hijack()
+    )
+
+    if (sources.length > 1) {
+      return this.merge(...sources)
+    } else {
+      return sources[0]
+    }
   }
 
-  static scrollWindow (...args) {
-    const [target, root, DeltaObservableClasses] = parseOpts(...args)
+  static scrollWindow (target, maybeRootOrOpening, maybeClosingSelector, ...DeltaObservableClasses) {
+    let root = target
+    let opening = maybeRootOrOpening
+    let closingSelector = maybeClosingSelector
+    let openingSelector = () => opening
+
+    if (isDeltaObservable(closingSelector)) {
+      DeltaObservableClasses.unshift(maybeClosingSelector)
+      closingSelector = null
+    }
+
+    if (isDeltaObservable(opening)) {
+      DeltaObservableClasses.unshift(opening)
+      opening = null
+    }
+
+    if (!DeltaObservableClasses.length) {
+      DeltaObservableClasses.push(Scroll)
+    }
+
+    if (opening && typeof opening[$$observable] !== 'function') {
+      root = opening
+      opening = null
+    }
+
+    if (!opening) {
+      openingSelector = DeltaClass => DeltaClass.scrollStart(target)
+    }
+
+    if (!closingSelector) {
+      closingSelector = DeltaClass => DeltaClass.scrollStop(root)
+    }
+
     const sources = DeltaObservableClasses.map(DeltaClass =>
-      DeltaClass.scrollStart(target).hijack()::map(v =>
-        DeltaClass.scroll(root).hijack()::takeUntil(
-          DeltaClass.scrollStop(root).hijack()
-        )
+      openingSelector(DeltaClass)::map(v =>
+        DeltaClass.scroll(root).hijack()
+        ::takeUntil(closingSelector(DeltaClass))
       )
     )
 
