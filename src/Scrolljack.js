@@ -1,3 +1,4 @@
+import $$observable from 'symbol-observable'
 import {map} from 'rxjs/operator/map'
 import {mergeAll} from 'rxjs/operator/mergeAll'
 import {mergeMap} from 'rxjs/operator/mergeMap'
@@ -81,11 +82,30 @@ export class Scrolljack extends DeltaObservable {
     }
   }
 
-  static scrollStop (...args) {
-    const [target, root, DeltaObservableClasses] = parseOpts(...args)
+  static scrollStop (target, maybeRootOrOpening, ...DeltaObservableClasses) {
+    let root = target
+    let opening = maybeRootOrOpening
+
+    if (isDeltaObservable(opening)) {
+      DeltaObservableClasses.unshift(opening)
+      opening = null
+    }
+
+    if (!DeltaObservableClasses.length) {
+      DeltaObservableClasses.push(Scroll)
+    }
+
+    let openingSelector = () => opening
+
+    if (!opening || typeof opening[$$observable] !== 'function') {
+      root = opening || root
+      openingSelector = DeltaClass => DeltaClass.scrollStart(target)
+    }
+
     const sources = DeltaObservableClasses.map(DeltaClass =>
-      DeltaClass.scrollStart(target).hijack()::mergeMap(() =>
-        DeltaClass.scrollStop(root).hijack()::take(1)
+      openingSelector(DeltaClass)::mergeMap(() =>
+        DeltaClass.scrollStop(root).hijack()
+        ::take(1)
       )
     )
 
