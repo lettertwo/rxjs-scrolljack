@@ -31,8 +31,8 @@ class WheelEventEmulatorSubcriber extends Subscriber {
       this.startNow()
     } else {
       this.moveNow()
-      this.scheduleStop()
     }
+    this.scheduleStop()
   }
 
   _complete () {
