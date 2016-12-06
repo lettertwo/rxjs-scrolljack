@@ -30,12 +30,12 @@ export class Scrolljack extends DeltaObservable {
     }
 
     if (!closingSelector) {
-      closingSelector = DeltaClass => DeltaClass.scrollStop(root)
+      closingSelector = (_, DeltaClass) => DeltaClass.scrollStop(root)
     }
 
     const sources = DeltaObservableClasses.map(DeltaClass =>
       DeltaClass.scrollStart(target).hijack()
-      ::throttle(() => closingSelector(DeltaClass))
+      ::throttle(value => closingSelector(value, DeltaClass))
     )
 
     if (sources.length > 1) {
@@ -91,13 +91,13 @@ export class Scrolljack extends DeltaObservable {
     }
 
     if (!closingSelector) {
-      closingSelector = DeltaClass => DeltaClass.scrollStop(root)
+      closingSelector = (_, DeltaClass) => DeltaClass.scrollStop(root)
     }
 
     const sources = DeltaObservableClasses.map(DeltaClass =>
       openingSelector(DeltaClass)::map(v =>
         DeltaClass.scroll(root).hijack()
-        ::takeUntil(closingSelector(DeltaClass))
+        ::takeUntil(closingSelector(v, DeltaClass))
       )
     )
 
