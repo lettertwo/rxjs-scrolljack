@@ -1,3 +1,11 @@
+## 1.0.0
+
+* Add support for native scroll input
+* Make native scroll input the default Scrolljack input
+* Allow Scrolljack.scrollStart to take a closingSelector arg
+* Allow Scrolljack.scrollStop to take an openings Observable
+* Add Scrolljack.scrollWindow openings and closingSelector args
+
 ## 0.4.0
 
 * Sync multiple kinematic operators with a latest value source
