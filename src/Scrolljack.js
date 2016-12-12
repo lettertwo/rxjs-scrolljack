@@ -7,15 +7,19 @@ import {throttle} from 'rxjs/operator/throttle'
 import {DeltaObservable} from './observables/DeltaObservable'
 import {Scroll} from './Scroll'
 
-const isDeltaObservable = value =>
-  value && (value === DeltaObservable || value.prototype instanceof DeltaObservable)
+const isDeltaObservableLike = value => (
+  value &&
+  value.hasProperty('scrollStart') && typeof value.scrollStart === 'function' &&
+  value.hasProperty('scrollStop') && typeof value.scrollStop === 'function' &&
+  value.hasProperty('scroll') && typeof value.scroll === 'function'
+)
 
 export class Scrolljack extends DeltaObservable {
   static scrollStart (target, maybeRootOrClosingSelector, ...DeltaObservableClasses) {
     let root = target
     let closingSelector = maybeRootOrClosingSelector
 
-    if (isDeltaObservable(closingSelector)) {
+    if (isDeltaObservableLike(closingSelector)) {
       DeltaObservableClasses.unshift(closingSelector)
       closingSelector = null
     }
@@ -67,12 +71,12 @@ export class Scrolljack extends DeltaObservable {
     let closingSelector = maybeClosingSelector
     let openingSelector = () => opening
 
-    if (isDeltaObservable(closingSelector)) {
+    if (isDeltaObservableLike(closingSelector)) {
       DeltaObservableClasses.unshift(maybeClosingSelector)
       closingSelector = null
     }
 
-    if (isDeltaObservable(opening)) {
+    if (isDeltaObservableLike(opening)) {
       DeltaObservableClasses.unshift(opening)
       opening = null
     }
@@ -112,7 +116,7 @@ export class Scrolljack extends DeltaObservable {
     let root = target
     let opening = maybeRootOrOpening
 
-    if (isDeltaObservable(opening)) {
+    if (isDeltaObservableLike(opening)) {
       DeltaObservableClasses.unshift(opening)
       opening = null
     }
