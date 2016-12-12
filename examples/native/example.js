@@ -223,7 +223,6 @@ function main () {
    * These represent the start of scroll input.
    * @type {Observable<Delta>}
    */
-  // const startDeltas = Scrolljack.scrollStart(target)
   const startDeltas = Scrolljack.scrollStart(target, shouldCloseScrollStart)
   .filter(filterIgnoredEvents)  // filter out start events we should ignore.
   .share()
