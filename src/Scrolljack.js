@@ -9,9 +9,9 @@ import {Scroll} from './Scroll'
 
 const isDeltaObservableLike = value => (
   value &&
-  value.hasProperty('scrollStart') && typeof value.scrollStart === 'function' &&
-  value.hasProperty('scrollStop') && typeof value.scrollStop === 'function' &&
-  value.hasProperty('scroll') && typeof value.scroll === 'function'
+  typeof value.scrollStart === 'function' &&
+  typeof value.scrollStop === 'function' &&
+  typeof value.scroll === 'function'
 )
 
 export class Scrolljack extends DeltaObservable {
