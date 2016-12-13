@@ -1,6 +1,6 @@
 {
   "name": "rxjs-scrolljack",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "An Observable scrolljacker",
   "main": "lib/index.js",
   "scripts": {
