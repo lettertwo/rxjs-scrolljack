@@ -2,6 +2,8 @@ import {KinematicUpdater} from './KinematicUpdater'
 import {computeNextValue} from './computeNextValue'
 import {parseXOpts, parseYOpts} from './parseOpts'
 
+const F = 1000 / 60  // Default frame rate
+
 class AnchorUpdater extends KinematicUpdater {
   _initSpring (spring, initialValue) {
     if (initialValue) {
@@ -14,8 +16,8 @@ class AnchorUpdater extends KinematicUpdater {
   }
 
   _computeNextSpring (value, spring) {
-    const t = value.deltaT / 1000
     const {netDelta, stiffness: K, damping: B, precision: P} = spring
+    const t = Math.min(F, Math.max(value.deltaT || 1)) / 1000
     const delta = spring.toDelta(value)
     const velocity = spring.toVelocity(value)
 

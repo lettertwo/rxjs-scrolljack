@@ -2,6 +2,8 @@ import {KinematicUpdater} from './KinematicUpdater'
 import {computeNextValue} from './computeNextValue'
 import {parseXOpts, parseYOpts} from './parseOpts'
 
+const F = 1000 / 60  // Default frame rate
+
 class MomentumUpdater extends KinematicUpdater {
   _initSpring (spring, initialValue) {
     if (initialValue) {
@@ -21,7 +23,7 @@ class MomentumUpdater extends KinematicUpdater {
     const delta = spring.toDelta(value)
     const velocity = spring.toVelocity(value)
 
-    const t = value.deltaT / 1000
+    const t = Math.min(F, Math.max(value.deltaT || 1)) / 1000
     const {stiffness: K, damping: B, precision: P} = spring
 
     // Compute the result of the current frame.
