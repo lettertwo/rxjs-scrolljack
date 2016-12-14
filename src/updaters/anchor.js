@@ -16,10 +16,10 @@ class AnchorUpdater extends KinematicUpdater {
   }
 
   _computeNextSpring (value, spring) {
-    const {netDelta, stiffness: K, damping: B, precision: P} = spring
     const t = Math.min(F, Math.max(value.deltaT || 1)) / 1000
+    const {lastVelocity, netDelta, stiffness: K, damping: B, precision: P} = spring
     const delta = spring.toDelta(value)
-    const velocity = spring.toVelocity(value)
+    const velocity = 0.2 * lastVelocity + 0.8 * spring.toVelocity(value)
 
     let newNetDelta
     if (!this.stopped) {
